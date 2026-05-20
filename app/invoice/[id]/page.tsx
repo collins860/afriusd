@@ -2,27 +2,62 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { parseUnits } from "viem";
+import { USDC_CONTRACT_ADDRESS, USDC_ABI } from "@/lib/blockchain/config";
+import { toast } from "sonner";
 
 const mockInvoice = {
   id: "INV-5860",
   merchant: "Emeka Designs",
-  merchantAddress: "0x1234...5678",
+  merchantAddress: "0x308c...46db",
+  merchantFullAddress: "0x308c092244ca7266134acd2fff755af08a7a46db" as `0x${string}`,
   customer: "John Doe",
   customerEmail: "john@example.com",
   description: "Website design and development — 5 pages, mobile responsive, with CMS integration.",
   amount: "250,000",
   currency: "NGN",
   symbol: "₦",
-  usdcAmount: "162.50",
+  usdcAmount: "10",
   dueDate: "2025-06-01",
   status: "pending",
 };
 
 export default function InvoicePage() {
+  const { address, isConnected } = useAccount();
   const [step, setStep] = useState<"view" | "paying" | "success">("view");
-  const [txHash] = useState("0xabc123def456789...");
 
-  if (step === "success") {
+  const { writeContract, data: txHash, isPending } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
+
+  const handlePay = async () => {
+    if (!isConnected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      setStep("paying");
+      writeContract({
+        address: USDC_CONTRACT_ADDRESS,
+        abi: USDC_ABI,
+        functionName: "transfer",
+        args: [
+          mockInvoice.merchantFullAddress,
+          parseUnits(mockInvoice.usdcAmount, 6),
+        ],
+      });
+    } catch (error) {
+      toast.error("Transaction failed. Please try again.");
+      setStep("view");
+    }
+  };
+
+  if (isSuccess || (step === "paying" && isSuccess)) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
@@ -32,12 +67,9 @@ export default function InvoicePage() {
                 <span className="text-4xl">✓</span>
               </div>
             </div>
-            <div className="absolute inset-0 rounded-full bg-emerald-500/5 animate-ping" />
           </div>
-
           <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
           <p className="text-gray-400 mb-8">Your payment has been confirmed on Arc Network.</p>
-
           <div className="glass rounded-xl border border-[#1e1e2e] p-6 mb-6 text-left space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-400 text-sm">Invoice</span>
@@ -53,10 +85,15 @@ export default function InvoicePage() {
             </div>
             <div className="border-t border-[#1e1e2e] pt-3">
               <p className="text-gray-400 text-xs mb-1">Transaction Hash</p>
-              <p className="text-emerald-400 text-xs font-mono truncate">{txHash}</p>
+              
+               <a href={`https://testnet.arcscan.app/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-400 text-xs font-mono truncate block hover:underline">
+                {txHash}
+              </a>
             </div>
           </div>
-
           <Link href="/">
             <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
               Return to AfriUSD
@@ -69,7 +106,6 @@ export default function InvoicePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      {/* Header */}
       <header className="border-b border-[#1e1e2e] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center">
@@ -77,14 +113,10 @@ export default function InvoicePage() {
           </div>
           <span className="font-semibold">AfriUSD</span>
         </div>
-        <div className="flex items-center gap-2 bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-3 py-1.5">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs text-gray-300">Arc Testnet</span>
-        </div>
+        <ConnectButton />
       </header>
 
       <div className="max-w-2xl mx-auto px-6 py-12">
-        {/* Status Banner */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold">Invoice Payment</h1>
@@ -95,9 +127,7 @@ export default function InvoicePage() {
           </span>
         </div>
 
-        {/* Invoice Card */}
         <div className="glass rounded-2xl border border-[#1e1e2e] overflow-hidden mb-6">
-          {/* Merchant Info */}
           <div className="p-6 border-b border-[#1e1e2e] flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
               <span className="text-emerald-400 font-bold text-lg">
@@ -110,19 +140,16 @@ export default function InvoicePage() {
             </div>
           </div>
 
-          {/* Invoice Details */}
           <div className="p-6 space-y-4">
             <div>
               <p className="text-gray-400 text-xs mb-1">Bill to</p>
               <p className="font-medium">{mockInvoice.customer}</p>
               <p className="text-gray-400 text-sm">{mockInvoice.customerEmail}</p>
             </div>
-
             <div>
               <p className="text-gray-400 text-xs mb-1">Description</p>
               <p className="text-sm leading-relaxed">{mockInvoice.description}</p>
             </div>
-
             <div className="border-t border-[#1e1e2e] pt-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-400 text-sm">Amount ({mockInvoice.currency})</span>
@@ -136,7 +163,6 @@ export default function InvoicePage() {
           </div>
         </div>
 
-        {/* QR Code Section */}
         <div className="glass rounded-xl border border-[#1e1e2e] p-6 mb-6 text-center">
           <p className="text-gray-400 text-sm mb-4">Scan to pay on mobile</p>
           <div className="w-32 h-32 bg-white rounded-xl mx-auto flex items-center justify-center">
@@ -153,25 +179,17 @@ export default function InvoicePage() {
               ))}
             </div>
           </div>
-          <p className="text-gray-600 text-xs mt-3">afriusd.app/pay/{mockInvoice.id.toLowerCase()}</p>
+          <p className="text-gray-600 text-xs mt-3">afriusd.vercel.app/invoice/{mockInvoice.id.toLowerCase()}</p>
         </div>
 
-        {/* Payment Button */}
-        {step === "view" && (
-          <div className="space-y-3">
-            <button
-              onClick={() => setStep("paying")}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-4 rounded-xl font-semibold text-lg transition-all glow-emerald"
-            >
-              Connect Wallet to Pay
-            </button>
-            <p className="text-center text-gray-600 text-xs">
-              Powered by Arc Network · Secured by USDC
-            </p>
+        {!isConnected ? (
+          <div className="text-center space-y-4">
+            <p className="text-gray-400 text-sm">Connect your wallet to pay this invoice</p>
+            <div className="flex justify-center">
+              <ConnectButton />
+            </div>
           </div>
-        )}
-
-        {step === "paying" && (
+        ) : (
           <div className="glass rounded-xl border border-emerald-500/20 p-6 space-y-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -179,10 +197,9 @@ export default function InvoicePage() {
               </div>
               <div>
                 <p className="text-sm font-medium">Wallet Connected</p>
-                <p className="text-xs text-gray-400">0x9876...4321</p>
+                <p className="text-xs text-gray-400">{address}</p>
               </div>
             </div>
-
             <div className="border-t border-[#1e1e2e] pt-4">
               <div className="flex justify-between text-sm mb-4">
                 <span className="text-gray-400">You will pay</span>
@@ -196,12 +213,12 @@ export default function InvoicePage() {
                 <span className="text-gray-400">Gas fee</span>
                 <span className="text-emerald-400">~$0.001</span>
               </div>
-
               <button
-                onClick={() => setStep("success")}
-                className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-4 rounded-xl font-semibold transition-colors"
+                onClick={handlePay}
+                disabled={isPending || isConfirming}
+                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold transition-colors"
               >
-                Confirm Payment — {mockInvoice.usdcAmount} USDC
+                {isPending ? "Confirm in wallet..." : isConfirming ? "Confirming on Arc..." : `Pay ${mockInvoice.usdcAmount} USDC`}
               </button>
             </div>
           </div>
