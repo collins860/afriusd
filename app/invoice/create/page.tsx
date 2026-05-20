@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 const currencies = [
   { code: "NGN", symbol: "₦", name: "Nigerian Naira", rate: 0.00065 },
@@ -32,8 +34,29 @@ export default function CreateInvoice() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const { error } = await supabase.from("invoices").insert({
+      id: invoiceId,
+      merchant_id: "0x308c092244ca7266134acd2fff755af08a7a46db",
+      customer_name: form.customerName,
+      customer_email: form.customerEmail,
+      description: form.description,
+      amount: parseFloat(form.amount),
+      currency: form.currency,
+      usdc_amount: parseFloat(usdcAmount),
+      status: "pending",
+      due_date: form.dueDate,
+    });
+
+    if (error) {
+      console.error(error);
+      toast.error("Failed to save invoice");
+      return;
+    }
+
+    toast.success("Invoice created successfully!");
     setSubmitted(true);
   };
 
@@ -72,7 +95,7 @@ export default function CreateInvoice() {
             <p className="text-gray-400 text-xs mb-2">Payment Link</p>
             <div className="flex items-center gap-2">
               <code className="text-emerald-400 text-xs flex-1 truncate">
-                afriusd.app/pay/{invoiceId.toLowerCase()}
+                afriusd.vercel.app/invoice/{invoiceId.toLowerCase()}
               </code>
               <button className="text-gray-400 hover:text-white text-xs border border-[#1e1e2e] px-3 py-1.5 rounded-lg transition-colors">
                 Copy
@@ -100,7 +123,6 @@ export default function CreateInvoice() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      {/* Header */}
       <header className="border-b border-[#1e1e2e] px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/dashboard">
@@ -120,10 +142,8 @@ export default function CreateInvoice() {
       </header>
 
       <div className="max-w-5xl mx-auto px-8 py-10 grid grid-cols-3 gap-8">
-        {/* Form */}
         <div className="col-span-2">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Customer Details */}
             <div className="glass rounded-xl border border-[#1e1e2e] p-6">
               <h2 className="font-semibold mb-5">Customer Details</h2>
               <div className="grid grid-cols-2 gap-4">
@@ -153,7 +173,6 @@ export default function CreateInvoice() {
               </div>
             </div>
 
-            {/* Invoice Details */}
             <div className="glass rounded-xl border border-[#1e1e2e] p-6">
               <h2 className="font-semibold mb-5">Invoice Details</h2>
               <div className="space-y-4">
@@ -226,11 +245,9 @@ export default function CreateInvoice() {
           </form>
         </div>
 
-        {/* Live Preview */}
         <div className="space-y-4">
           <div className="glass rounded-xl border border-[#1e1e2e] p-6 sticky top-6">
             <h3 className="font-semibold mb-5 text-sm text-gray-400">Live Preview</h3>
-
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -241,18 +258,15 @@ export default function CreateInvoice() {
                 </div>
                 <span className="text-xs text-gray-500">{invoiceId}</span>
               </div>
-
               <div className="border-t border-[#1e1e2e] pt-4">
                 <p className="text-xs text-gray-500 mb-1">Bill to</p>
                 <p className="text-sm font-medium">{form.customerName || "Customer Name"}</p>
                 <p className="text-xs text-gray-500">{form.customerEmail || "email@example.com"}</p>
               </div>
-
               <div className="border-t border-[#1e1e2e] pt-4">
                 <p className="text-xs text-gray-500 mb-1">Description</p>
                 <p className="text-sm">{form.description || "Invoice description"}</p>
               </div>
-
               <div className="border-t border-[#1e1e2e] pt-4 bg-emerald-500/5 rounded-lg p-3">
                 <div className="flex justify-between mb-2">
                   <span className="text-xs text-gray-400">Amount ({form.currency})</span>
@@ -265,7 +279,6 @@ export default function CreateInvoice() {
                   <span className="text-sm font-bold text-emerald-400">{usdcAmount} USDC</span>
                 </div>
               </div>
-
               {form.dueDate && (
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Due date</span>
