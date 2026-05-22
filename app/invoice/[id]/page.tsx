@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { parseUnits } from "viem";
 import { USDC_CONTRACT_ADDRESS, USDC_ABI } from "@/lib/blockchain/config";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 const mockInvoice = {
@@ -30,9 +31,28 @@ export default function InvoicePage() {
 
   const { writeContract, data: txHash, isPending } = useWriteContract();
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: txHash,
+  const { isLoading: isConfirming, isSuccess } =
+  useWaitForTransactionReceipt({
+    hash: txHash as `0x${string}`,
   });
+
+useEffect(() => {
+  async function markPaid() {
+    if (isSuccess && txHash) {
+      await supabase
+        .from("invoices")
+        .update({
+          status: "paid",
+          payment_tx_hash: txHash,
+        })
+        .eq("id", mockInvoice.id);
+
+      toast.success("Invoice marked as paid!");
+    }
+  }
+
+  markPaid();
+}, [isSuccess, txHash]);
 
   const handlePay = async () => {
     if (!isConnected) {
