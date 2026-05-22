@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -9,56 +10,88 @@ import { USDC_CONTRACT_ADDRESS, USDC_ABI } from "@/lib/blockchain/config";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-const mockInvoice = {
-  id: "INV-5860",
-  merchant: "Emeka Designs",
-  merchantAddress: "0x308c...46db",
-  merchantFullAddress: "0x308c092244ca7266134acd2fff755af08a7a46db" as `0x${string}`,
-  customer: "John Doe",
-  customerEmail: "john@example.com",
-  description: "Website design and development — 5 pages, mobile responsive, with CMS integration.",
-  amount: "250,000",
-  currency: "NGN",
-  symbol: "₦",
-  usdcAmount: "10",
-  dueDate: "2025-06-01",
-  status: "pending",
+type Invoice = {
+  id: string;
+  merchant_id: string;
+  customer_name: string;
+  customer_email: string;
+  description: string;
+  amount: number;
+  currency: string;
+  usdc_amount: number;
+  status: string;
+  due_date: string;
+  payment_tx_hash: string;
 };
 
 export default function InvoicePage() {
-  const { address, isConnected } = useAccount();
+  const params = useParams();
+  const invoiceId = params.id as string;
+
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"view" | "paying" | "success">("view");
 
+  const { address, isConnected } = useAccount();
   const { writeContract, data: txHash, isPending } = useWriteContract();
-
-  const { isLoading: isConfirming, isSuccess } =
-  useWaitForTransactionReceipt({
-    hash: txHash as `0x${string}`,
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash: txHash,
   });
 
-useEffect(() => {
-  async function markPaid() {
-    if (isSuccess && txHash) {
-      await supabase
+  // Load invoice from database
+  useEffect(() => {
+    async function fetchInvoice() {
+      const { data, error } = await supabase
         .from("invoices")
-        .update({
-          status: "paid",
-          payment_tx_hash: txHash,
-        })
-        .eq("id", mockInvoice.id);
+        .select("*")
+        .eq("id", invoiceId.toUpperCase())
+        .single();
 
-      toast.success("Invoice marked as paid!");
+      if (!error && data) {
+        setInvoice(data);
+      } else {
+        // Try lowercase too
+        const { data: data2 } = await supabase
+          .from("invoices")
+          .select("*")
+          .ilike("id", invoiceId)
+          .single();
+        if (data2) setInvoice(data2);
+      }
+      setLoading(false);
     }
-  }
+    fetchInvoice();
+  }, [invoiceId]);
 
-  markPaid();
-}, [isSuccess, txHash]);
+  // Mark invoice as paid after successful transaction
+  useEffect(() => {
+    async function markPaid() {
+      if (isSuccess && txHash && invoice) {
+        const { error } = await supabase
+          .from("invoices")
+          .update({
+            status: "paid",
+            payment_tx_hash: txHash,
+          })
+          .eq("id", invoice.id);
+
+        if (!error) {
+          toast.success("Invoice marked as paid!");
+          setStep("success");
+        } else {
+          toast.error("Payment confirmed but failed to update status");
+        }
+      }
+    }
+    markPaid();
+  }, [isSuccess, txHash, invoice]);
 
   const handlePay = async () => {
     if (!isConnected) {
       toast.error("Please connect your wallet first");
       return;
     }
+    if (!invoice) return;
 
     try {
       setStep("paying");
@@ -67,8 +100,8 @@ useEffect(() => {
         abi: USDC_ABI,
         functionName: "transfer",
         args: [
-          mockInvoice.merchantFullAddress,
-          parseUnits(mockInvoice.usdcAmount, 6),
+          invoice.merchant_id as `0x${string}`,
+          parseUnits(invoice.usdc_amount.toString(), 6),
         ],
       });
     } catch (error) {
@@ -77,15 +110,35 @@ useEffect(() => {
     }
   };
 
-  if (isSuccess || (step === "paying" && isSuccess)) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
+        <p className="text-gray-400">Loading invoice...</p>
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-2xl font-bold mb-2">Invoice not found</p>
+          <p className="text-gray-400 mb-6">The invoice {invoiceId} does not exist.</p>
+          <Link href="/">
+            <button className="bg-emerald-500 text-white px-6 py-3 rounded-xl">Go Home</button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "success") {
     return (
       <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
-          <div className="relative mb-8">
-            <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/30 flex items-center justify-center">
-                <span className="text-4xl">✓</span>
-              </div>
+          <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/30 flex items-center justify-center">
+              <span className="text-4xl">✓</span>
             </div>
           </div>
           <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
@@ -93,11 +146,11 @@ useEffect(() => {
           <div className="glass rounded-xl border border-[#1e1e2e] p-6 mb-6 text-left space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-400 text-sm">Invoice</span>
-              <span className="text-white text-sm font-medium">{mockInvoice.id}</span>
+              <span className="text-white text-sm font-medium">{invoice.id}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400 text-sm">Amount Paid</span>
-              <span className="text-emerald-400 text-sm font-bold">{mockInvoice.usdcAmount} USDC</span>
+              <span className="text-emerald-400 text-sm font-bold">{invoice.usdc_amount} USDC</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400 text-sm">Network</span>
@@ -109,9 +162,8 @@ useEffect(() => {
                <a href={`https://testnet.arcscan.app/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-emerald-400 text-xs font-mono truncate block hover:underline">
-                {txHash}
-              </a>
+                className="text-emerald-400 text-xs font-mono truncate block hover:underline"
+              >{txHash}</a>
             </div>
           </div>
           <Link href="/">
@@ -140,69 +192,66 @@ useEffect(() => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold">Invoice Payment</h1>
-            <p className="text-gray-400 text-sm mt-1">{mockInvoice.id} · Due {mockInvoice.dueDate}</p>
+            <p className="text-gray-400 text-sm mt-1">{invoice.id} · Due {invoice.due_date}</p>
           </div>
-          <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-xs px-3 py-1.5 rounded-full font-medium">
-            Awaiting Payment
+          <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+            invoice.status === "paid"
+              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+          }`}>
+            {invoice.status === "paid" ? "Paid" : "Awaiting Payment"}
           </span>
         </div>
 
         <div className="glass rounded-2xl border border-[#1e1e2e] overflow-hidden mb-6">
           <div className="p-6 border-b border-[#1e1e2e] flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-              <span className="text-emerald-400 font-bold text-lg">
-                {mockInvoice.merchant.charAt(0)}
-              </span>
+              <span className="text-emerald-400 font-bold text-lg">M</span>
             </div>
             <div>
-              <p className="font-semibold">{mockInvoice.merchant}</p>
-              <p className="text-gray-400 text-sm">{mockInvoice.merchantAddress}</p>
+              <p className="font-semibold">Merchant</p>
+              <p className="text-gray-400 text-sm">{invoice.merchant_id.slice(0, 10)}...{invoice.merchant_id.slice(-6)}</p>
             </div>
           </div>
 
           <div className="p-6 space-y-4">
             <div>
               <p className="text-gray-400 text-xs mb-1">Bill to</p>
-              <p className="font-medium">{mockInvoice.customer}</p>
-              <p className="text-gray-400 text-sm">{mockInvoice.customerEmail}</p>
+              <p className="font-medium">{invoice.customer_name}</p>
+              <p className="text-gray-400 text-sm">{invoice.customer_email}</p>
             </div>
             <div>
               <p className="text-gray-400 text-xs mb-1">Description</p>
-              <p className="text-sm leading-relaxed">{mockInvoice.description}</p>
+              <p className="text-sm leading-relaxed">{invoice.description}</p>
             </div>
             <div className="border-t border-[#1e1e2e] pt-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-400 text-sm">Amount ({mockInvoice.currency})</span>
-                <span className="font-medium">{mockInvoice.symbol}{mockInvoice.amount}</span>
+                <span className="text-gray-400 text-sm">Amount ({invoice.currency})</span>
+                <span className="font-medium">{Number(invoice.amount).toLocaleString()} {invoice.currency}</span>
               </div>
               <div className="flex justify-between items-center bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-4 py-3">
                 <span className="text-gray-400 text-sm">Pay with USDC</span>
-                <span className="text-2xl font-bold text-emerald-400">{mockInvoice.usdcAmount} USDC</span>
+                <span className="text-2xl font-bold text-emerald-400">{invoice.usdc_amount} USDC</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="glass rounded-xl border border-[#1e1e2e] p-6 mb-6 text-center">
-          <p className="text-gray-400 text-sm mb-4">Scan to pay on mobile</p>
-          <div className="w-32 h-32 bg-white rounded-xl mx-auto flex items-center justify-center">
-            <div className="grid grid-cols-5 gap-0.5 p-2">
-              {Array.from({ length: 25 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-4 h-4 rounded-sm ${
-                    [0,1,2,3,4,5,9,10,14,15,19,20,21,22,23,24,7,12,17].includes(i)
-                      ? "bg-black"
-                      : "bg-white"
-                  }`}
-                />
-              ))}
-            </div>
+        {invoice.status === "paid" ? (
+          <div className="glass rounded-xl border border-emerald-500/20 p-6 text-center">
+            <p className="text-emerald-400 font-semibold text-lg mb-2">✓ This invoice has been paid</p>
+            {invoice.payment_tx_hash && (
+              <a
+                href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-400 hover:text-emerald-400 transition-colors"
+              >
+                View transaction on ArcScan →
+              </a>
+            )}
           </div>
-          <p className="text-gray-600 text-xs mt-3">afriusd.vercel.app/invoice/{mockInvoice.id.toLowerCase()}</p>
-        </div>
-
-        {!isConnected ? (
+        ) : !isConnected ? (
           <div className="text-center space-y-4">
             <p className="text-gray-400 text-sm">Connect your wallet to pay this invoice</p>
             <div className="flex justify-center">
@@ -223,7 +272,7 @@ useEffect(() => {
             <div className="border-t border-[#1e1e2e] pt-4">
               <div className="flex justify-between text-sm mb-4">
                 <span className="text-gray-400">You will pay</span>
-                <span className="font-bold text-emerald-400">{mockInvoice.usdcAmount} USDC</span>
+                <span className="font-bold text-emerald-400">{invoice.usdc_amount} USDC</span>
               </div>
               <div className="flex justify-between text-sm mb-4">
                 <span className="text-gray-400">Network</span>
@@ -238,7 +287,7 @@ useEffect(() => {
                 disabled={isPending || isConfirming}
                 className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold transition-colors"
               >
-                {isPending ? "Confirm in wallet..." : isConfirming ? "Confirming on Arc..." : `Pay ${mockInvoice.usdcAmount} USDC`}
+                {isPending ? "Confirm in wallet..." : isConfirming ? "Confirming on Arc..." : `Pay ${invoice.usdc_amount} USDC`}
               </button>
             </div>
           </div>

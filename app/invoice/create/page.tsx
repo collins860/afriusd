@@ -1,121 +1,176 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { parseUnits } from "viem";
+import { USDC_CONTRACT_ADDRESS, USDC_ABI } from "@/lib/blockchain/config";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-const currencies = [
-  { code: "NGN", symbol: "₦", name: "Nigerian Naira", rate: 0.00065 },
-  { code: "KES", symbol: "KES", name: "Kenyan Shilling", rate: 0.0077 },
-  { code: "GHS", symbol: "GHS", name: "Ghanaian Cedi", rate: 0.068 },
-  { code: "ZAR", symbol: "R", name: "South African Rand", rate: 0.054 },
-  { code: "USD", symbol: "$", name: "US Dollar", rate: 1 },
-];
+type Invoice = {
+  id: string;
+  merchant_id: string;
+  customer_name: string;
+  customer_email: string;
+  description: string;
+  amount: number;
+  currency: string;
+  usdc_amount: number;
+  status: string;
+  due_date: string;
+  payment_tx_hash: string;
+};
 
-export default function CreateInvoice() {
-  const [form, setForm] = useState({
-    customerName: "",
-    customerEmail: "",
-    description: "",
-    amount: "",
-    currency: "NGN",
-    dueDate: "",
+export default function InvoicePage() {
+  const params = useParams();
+  const invoiceId = params.id as string;
+
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState<"view" | "paying" | "success">("view");
+
+  const { address, isConnected } = useAccount();
+  const { writeContract, data: txHash, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash: txHash,
   });
-  const [submitted, setSubmitted] = useState(false);
-  const [invoiceId] = useState(`INV-${Math.floor(Math.random() * 9000) + 1000}`);
 
-  const selectedCurrency = currencies.find((c) => c.code === form.currency)!;
-  const usdcAmount = form.amount
-    ? (parseFloat(form.amount) * selectedCurrency.rate).toFixed(2)
-    : "0.00";
+  // Load invoice from database
+  useEffect(() => {
+    async function fetchInvoice() {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("id", invoiceId.toUpperCase())
+        .single();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+      if (!error && data) {
+        setInvoice(data);
+      } else {
+        // Try lowercase too
+        const { data: data2 } = await supabase
+          .from("invoices")
+          .select("*")
+          .ilike("id", invoiceId)
+          .single();
+        if (data2) setInvoice(data2);
+      }
+      setLoading(false);
+    }
+    fetchInvoice();
+  }, [invoiceId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Mark invoice as paid after successful transaction
+  useEffect(() => {
+    async function markPaid() {
+      if (isSuccess && txHash && invoice) {
+        const { error } = await supabase
+          .from("invoices")
+          .update({
+            status: "paid",
+            payment_tx_hash: txHash,
+          })
+          .eq("id", invoice.id);
 
-    const { error } = await supabase.from("invoices").insert({
-      id: invoiceId,
-      merchant_id: "0x308c092244ca7266134acd2fff755af08a7a46db",
-      customer_name: form.customerName,
-      customer_email: form.customerEmail,
-      description: form.description,
-      amount: parseFloat(form.amount),
-      currency: form.currency,
-      usdc_amount: parseFloat(usdcAmount),
-      status: "pending",
-      due_date: form.dueDate,
-    });
+        if (!error) {
+          toast.success("Invoice marked as paid!");
+          setStep("success");
+        } else {
+          toast.error("Payment confirmed but failed to update status");
+        }
+      }
+    }
+    markPaid();
+  }, [isSuccess, txHash, invoice]);
 
-    if (error) {
-      console.error(error);
-      toast.error("Failed to save invoice");
+  const handlePay = async () => {
+    if (!isConnected) {
+      toast.error("Please connect your wallet first");
       return;
     }
+    if (!invoice) return;
 
-    toast.success("Invoice created successfully!");
-    setSubmitted(true);
+    try {
+      setStep("paying");
+      writeContract({
+        address: USDC_CONTRACT_ADDRESS,
+        abi: USDC_ABI,
+        functionName: "transfer",
+        args: [
+          invoice.merchant_id as `0x${string}`,
+          parseUnits(invoice.usdc_amount.toString(), 6),
+        ],
+      });
+    } catch (error) {
+      toast.error("Transaction failed. Please try again.");
+      setStep("view");
+    }
   };
 
-  if (submitted) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
+        <p className="text-gray-400">Loading invoice...</p>
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-2xl font-bold mb-2">Invoice not found</p>
+          <p className="text-gray-400 mb-6">The invoice {invoiceId} does not exist.</p>
+          <Link href="/">
+            <button className="bg-emerald-500 text-white px-6 py-3 rounded-xl">Go Home</button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "success") {
     return (
       <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl">✓</span>
-          </div>
-          <h1 className="text-2xl font-bold mb-2">Invoice Created!</h1>
-          <p className="text-gray-400 mb-8">Your invoice {invoiceId} has been created successfully.</p>
-
-          <div className="glass rounded-xl border border-[#1e1e2e] p-6 mb-6 text-left">
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-400 text-sm">Invoice ID</span>
-                <span className="text-white text-sm font-medium">{invoiceId}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400 text-sm">Customer</span>
-                <span className="text-white text-sm font-medium">{form.customerName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400 text-sm">Amount</span>
-                <span className="text-white text-sm font-medium">{selectedCurrency.symbol}{parseFloat(form.amount).toLocaleString()} {form.currency}</span>
-              </div>
-              <div className="flex justify-between border-t border-[#1e1e2e] pt-3">
-                <span className="text-gray-400 text-sm">USDC Amount</span>
-                <span className="text-emerald-400 text-sm font-bold">{usdcAmount} USDC</span>
-              </div>
+          <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/30 flex items-center justify-center">
+              <span className="text-4xl">✓</span>
             </div>
           </div>
-
-          <div className="glass rounded-xl border border-[#1e1e2e] p-4 mb-6">
-            <p className="text-gray-400 text-xs mb-2">Payment Link</p>
-            <div className="flex items-center gap-2">
-              <code className="text-emerald-400 text-xs flex-1 truncate">
-                afriusd.vercel.app/invoice/{invoiceId.toLowerCase()}
-              </code>
-              <button className="text-gray-400 hover:text-white text-xs border border-[#1e1e2e] px-3 py-1.5 rounded-lg transition-colors">
-                Copy
-              </button>
+          <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
+          <p className="text-gray-400 mb-8">Your payment has been confirmed on Arc Network.</p>
+          <div className="glass rounded-xl border border-[#1e1e2e] p-6 mb-6 text-left space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-400 text-sm">Invoice</span>
+              <span className="text-white text-sm font-medium">{invoice.id}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400 text-sm">Amount Paid</span>
+              <span className="text-emerald-400 text-sm font-bold">{invoice.usdc_amount} USDC</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400 text-sm">Network</span>
+              <span className="text-white text-sm">Arc Testnet</span>
+            </div>
+            <div className="border-t border-[#1e1e2e] pt-3">
+              <p className="text-gray-400 text-xs mb-1">Transaction Hash</p>
+              
+                <a href={`https://testnet.arcscan.app/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-400 text-xs font-mono truncate block hover:underline"
+              >{txHash}</a>
             </div>
           </div>
-
-          <div className="flex gap-3">
-            <Link href="/dashboard" className="flex-1">
-              <button className="w-full border border-[#1e1e2e] hover:border-gray-600 text-gray-300 py-3 rounded-xl text-sm font-medium transition-all">
-                Back to Dashboard
-              </button>
-            </Link>
-            <button
-              onClick={() => setSubmitted(false)}
-              className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl text-sm font-medium transition-colors"
-            >
-              New Invoice
+          <Link href="/">
+            <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
+              Return to AfriUSD
             </button>
-          </div>
+          </Link>
         </div>
       </div>
     );
@@ -123,171 +178,120 @@ export default function CreateInvoice() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <header className="border-b border-[#1e1e2e] px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard">
-            <button className="text-gray-400 hover:text-white transition-colors text-sm">
-              ← Back
-            </button>
-          </Link>
-          <div>
-            <h1 className="text-lg font-semibold">Create Invoice</h1>
-            <p className="text-gray-500 text-xs">{invoiceId}</p>
+      <header className="border-b border-[#1e1e2e] px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center">
+            <span className="text-white font-bold text-xs">A</span>
           </div>
+          <span className="font-semibold">AfriUSD</span>
         </div>
-        <div className="flex items-center gap-2 bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-3 py-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-sm text-gray-300">Arc Testnet</span>
-        </div>
+        <ConnectButton />
       </header>
 
-      <div className="max-w-5xl mx-auto px-8 py-10 grid grid-cols-3 gap-8">
-        <div className="col-span-2">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="glass rounded-xl border border-[#1e1e2e] p-6">
-              <h2 className="font-semibold mb-5">Customer Details</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-gray-400 block mb-2">Customer Name *</label>
-                  <input
-                    name="customerName"
-                    value={form.customerName}
-                    onChange={handleChange}
-                    placeholder="John Doe"
-                    required
-                    className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 block mb-2">Customer Email *</label>
-                  <input
-                    name="customerEmail"
-                    type="email"
-                    value={form.customerEmail}
-                    onChange={handleChange}
-                    placeholder="john@example.com"
-                    required
-                    className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="glass rounded-xl border border-[#1e1e2e] p-6">
-              <h2 className="font-semibold mb-5">Invoice Details</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-400 block mb-2">Description *</label>
-                  <textarea
-                    name="description"
-                    value={form.description}
-                    onChange={handleChange}
-                    placeholder="Website design, freelance work, product sale..."
-                    required
-                    rows={3}
-                    className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-gray-400 block mb-2">Currency *</label>
-                    <select
-                      name="currency"
-                      value={form.currency}
-                      onChange={handleChange}
-                      className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                    >
-                      {currencies.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.code} — {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-400 block mb-2">Amount *</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                        {selectedCurrency.symbol}
-                      </span>
-                      <input
-                        name="amount"
-                        type="number"
-                        value={form.amount}
-                        onChange={handleChange}
-                        placeholder="0.00"
-                        required
-                        className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg pl-8 pr-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 block mb-2">Due Date *</label>
-                  <input
-                    name="dueDate"
-                    type="date"
-                    value={form.dueDate}
-                    onChange={handleChange}
-                    required
-                    className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-4 rounded-xl font-semibold text-lg transition-colors glow-emerald"
-            >
-              Create Invoice →
-            </button>
-          </form>
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">Invoice Payment</h1>
+            <p className="text-gray-400 text-sm mt-1">{invoice.id} · Due {invoice.due_date}</p>
+          </div>
+          <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+            invoice.status === "paid"
+              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+          }`}>
+            {invoice.status === "paid" ? "Paid" : "Awaiting Payment"}
+          </span>
         </div>
 
-        <div className="space-y-4">
-          <div className="glass rounded-xl border border-[#1e1e2e] p-6 sticky top-6">
-            <h3 className="font-semibold mb-5 text-sm text-gray-400">Live Preview</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-emerald-500 flex items-center justify-center">
-                    <span className="text-white font-bold text-xs">A</span>
-                  </div>
-                  <span className="text-sm font-medium">AfriUSD</span>
-                </div>
-                <span className="text-xs text-gray-500">{invoiceId}</span>
+        <div className="glass rounded-2xl border border-[#1e1e2e] overflow-hidden mb-6">
+          <div className="p-6 border-b border-[#1e1e2e] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+              <span className="text-emerald-400 font-bold text-lg">M</span>
+            </div>
+            <div>
+              <p className="font-semibold">Merchant</p>
+              <p className="text-gray-400 text-sm">{invoice.merchant_id.slice(0, 10)}...{invoice.merchant_id.slice(-6)}</p>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div>
+              <p className="text-gray-400 text-xs mb-1">Bill to</p>
+              <p className="font-medium">{invoice.customer_name}</p>
+              <p className="text-gray-400 text-sm">{invoice.customer_email}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-xs mb-1">Description</p>
+              <p className="text-sm leading-relaxed">{invoice.description}</p>
+            </div>
+            <div className="border-t border-[#1e1e2e] pt-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-400 text-sm">Amount ({invoice.currency})</span>
+                <span className="font-medium">{Number(invoice.amount).toLocaleString()} {invoice.currency}</span>
               </div>
-              <div className="border-t border-[#1e1e2e] pt-4">
-                <p className="text-xs text-gray-500 mb-1">Bill to</p>
-                <p className="text-sm font-medium">{form.customerName || "Customer Name"}</p>
-                <p className="text-xs text-gray-500">{form.customerEmail || "email@example.com"}</p>
+              <div className="flex justify-between items-center bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-4 py-3">
+                <span className="text-gray-400 text-sm">Pay with USDC</span>
+                <span className="text-2xl font-bold text-emerald-400">{invoice.usdc_amount} USDC</span>
               </div>
-              <div className="border-t border-[#1e1e2e] pt-4">
-                <p className="text-xs text-gray-500 mb-1">Description</p>
-                <p className="text-sm">{form.description || "Invoice description"}</p>
-              </div>
-              <div className="border-t border-[#1e1e2e] pt-4 bg-emerald-500/5 rounded-lg p-3">
-                <div className="flex justify-between mb-2">
-                  <span className="text-xs text-gray-400">Amount ({form.currency})</span>
-                  <span className="text-sm font-medium">
-                    {selectedCurrency.symbol}{form.amount ? parseFloat(form.amount).toLocaleString() : "0"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-xs text-gray-400">USDC Equivalent</span>
-                  <span className="text-sm font-bold text-emerald-400">{usdcAmount} USDC</span>
-                </div>
-              </div>
-              {form.dueDate && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-gray-500">Due date</span>
-                  <span className="text-gray-300">{form.dueDate}</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
+
+        {invoice.status === "paid" ? (
+          <div className="glass rounded-xl border border-emerald-500/20 p-6 text-center">
+            <p className="text-emerald-400 font-semibold text-lg mb-2">✓ This invoice has been paid</p>
+            {invoice.payment_tx_hash && (
+              
+              <a  href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-400 hover:text-emerald-400 transition-colors"
+              >
+                View transaction on ArcScan →
+              </a>
+            )}
+          </div>
+        ) : !isConnected ? (
+          <div className="text-center space-y-4">
+            <p className="text-gray-400 text-sm">Connect your wallet to pay this invoice</p>
+            <div className="flex justify-center">
+              <ConnectButton />
+            </div>
+          </div>
+        ) : (
+          <div className="glass rounded-xl border border-emerald-500/20 p-6 space-y-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full bg-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Wallet Connected</p>
+                <p className="text-xs text-gray-400">{address}</p>
+              </div>
+            </div>
+            <div className="border-t border-[#1e1e2e] pt-4">
+              <div className="flex justify-between text-sm mb-4">
+                <span className="text-gray-400">You will pay</span>
+                <span className="font-bold text-emerald-400">{invoice.usdc_amount} USDC</span>
+              </div>
+              <div className="flex justify-between text-sm mb-4">
+                <span className="text-gray-400">Network</span>
+                <span>Arc Testnet</span>
+              </div>
+              <div className="flex justify-between text-sm mb-6">
+                <span className="text-gray-400">Gas fee</span>
+                <span className="text-emerald-400">~$0.001</span>
+              </div>
+              <button
+                onClick={handlePay}
+                disabled={isPending || isConfirming}
+                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold transition-colors"
+              >
+                {isPending ? "Confirm in wallet..." : isConfirming ? "Confirming on Arc..." : `Pay ${invoice.usdc_amount} USDC`}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
