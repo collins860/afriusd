@@ -66,23 +66,31 @@ export default function InvoicePage() {
   // Mark invoice as paid after successful transaction
   useEffect(() => {
     async function markPaid() {
-      if (isSuccess && txHash && invoice) {
-        const { error } = await supabase
-          .from("invoices")
-          .update({
-            status: "paid",
-            payment_tx_hash: txHash,
-          })
-          .eq("id", invoice.id);
+  if (isSuccess && txHash && invoice) {
+    toast.loading("Verifying payment...");
 
-        if (!error) {
-          toast.success("Invoice marked as paid!");
-          setStep("success");
-        } else {
-          toast.error("Payment confirmed but failed to update status");
-        }
-      }
+    // Call Circle API verification endpoint
+    const response = await fetch("/api/verify-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        txHash,
+        invoiceId: invoice.id,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      toast.dismiss();
+      toast.success("Payment verified and confirmed!");
+      setStep("success");
+    } else {
+      toast.dismiss();
+      toast.error("Payment verification failed. Please contact support.");
     }
+  }
+}
     markPaid();
   }, [isSuccess, txHash, invoice]);
 
