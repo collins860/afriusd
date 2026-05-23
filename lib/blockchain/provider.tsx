@@ -8,7 +8,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 
 const config = getDefaultConfig({
   appName: "AfriUSD",
-  projectId: "afriusd_demo_project",
+  projectId: "1c78f2b6187f738cd6a7db007432b41d",
   chains: [arcTestnet],
   transports: {
     [arcTestnet.id]: http("https://rpc.testnet.arc.network"),
