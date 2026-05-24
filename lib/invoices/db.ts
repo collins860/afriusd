@@ -48,7 +48,21 @@ export async function createInvoice(
   id: string,
   data: InvoiceData
 ): Promise<Invoice> {
-  const row = { id, user_id: userId, data };
+  // Include legacy flat columns when the table still has them (older Supabase schema).
+  const row = {
+    id,
+    user_id: userId,
+    data,
+    merchant_id: data.merchant_id,
+    customer_name: data.customer_name,
+    customer_email: data.customer_email,
+    description: data.description,
+    amount: data.amount,
+    currency: data.currency,
+    usdc_amount: data.usdc_amount,
+    status: data.status,
+    due_date: data.due_date,
+  };
   const { data: inserted, error } = await supabase
     .from("invoices")
     .insert(row)

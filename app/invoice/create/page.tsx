@@ -59,7 +59,11 @@ export default function CreateInvoice() {
       });
     } catch (error) {
       console.error(error);
-      toast.error("Failed to save invoice");
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String((error as { message: string }).message)
+          : "Failed to save invoice";
+      toast.error(message);
       return;
     }
 
