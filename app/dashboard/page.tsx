@@ -1,20 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
 import DashboardLayout from "@/components/dashboard/Layout";
-
-type Invoice = {
-  id: string;
-  customer_name: string;
-  amount: number;
-  currency: string;
-  usdc_amount: number;
-  status: string;
-  created_at: string;
-  due_date: string;
-};
+import { useUserInvoices } from "@/lib/invoices/useUserInvoices";
 
 const statusStyles: Record<string, string> = {
   paid: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
@@ -23,22 +11,12 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { invoices, loading } = useUserInvoices();
 
   const totalRevenue = invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + Number(i.usdc_amount), 0).toFixed(2);
   const paidCount = invoices.filter((i) => i.status === "paid").length;
   const pendingCount = invoices.filter((i) => i.status === "pending").length;
   const totalUsdc = invoices.reduce((sum, i) => sum + Number(i.usdc_amount), 0).toFixed(2);
-
-  useEffect(() => {
-    async function fetchInvoices() {
-      const { data, error } = await supabase.from("invoices").select("*").order("created_at", { ascending: false });
-      if (!error && data) setInvoices(data);
-      setLoading(false);
-    }
-    fetchInvoices();
-  }, []);
 
   return (
     <DashboardLayout>

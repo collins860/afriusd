@@ -8,21 +8,9 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { parseUnits } from "viem";
 import { USDC_CONTRACT_ADDRESS, USDC_ABI } from "@/lib/blockchain/config";
 import { supabase } from "@/lib/supabase/client";
+import { fetchInvoiceById } from "@/lib/invoices/db";
+import type { Invoice } from "@/lib/invoices/types";
 import { toast } from "sonner";
-
-type Invoice = {
-  id: string;
-  merchant_id: string;
-  customer_name: string;
-  customer_email: string;
-  description: string;
-  amount: number;
-  currency: string;
-  usdc_amount: number;
-  status: string;
-  due_date: string;
-  payment_tx_hash: string;
-};
 
 export default function InvoicePage() {
   const params = useParams();
@@ -38,29 +26,18 @@ export default function InvoicePage() {
     hash: txHash,
   });
 
-  // Load invoice from database
   useEffect(() => {
-    async function fetchInvoice() {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select("*")
-        .eq("id", invoiceId.toUpperCase())
-        .single();
-
-      if (!error && data) {
+    async function loadInvoice() {
+      try {
+        const data = await fetchInvoiceById(supabase, invoiceId);
         setInvoice(data);
-      } else {
-        // Try lowercase too
-        const { data: data2 } = await supabase
-          .from("invoices")
-          .select("*")
-          .ilike("id", invoiceId)
-          .single();
-        if (data2) setInvoice(data2);
+      } catch {
+        setInvoice(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
-    fetchInvoice();
+    loadInvoice();
   }, [invoiceId]);
 
   // Mark invoice as paid after successful transaction

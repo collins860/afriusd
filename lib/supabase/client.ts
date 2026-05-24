@@ -1,6 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "./browser";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+/** Browser Supabase client with persisted auth session. */
+export const supabase = createClient();

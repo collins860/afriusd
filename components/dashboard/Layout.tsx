@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { signOut } from "@/lib/auth/actions";
+import { toast } from "sonner";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "▦", href: "/dashboard" },
@@ -14,7 +17,30 @@ const navItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const displayName =
+    user?.user_metadata?.business_name ||
+    user?.email?.split("@")[0] ||
+    "Merchant";
+  const displayEmail = user?.email ?? "";
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await signOut();
+      toast.success("Signed out");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("Could not sign out");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
@@ -99,17 +125,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ))}
           </nav>
 
-          <div className="p-4 border-t border-[#1e1e2e]">
+          <div className="p-4 border-t border-[#1e1e2e] space-y-2">
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#1a1a24]">
               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <span className="text-emerald-400 text-sm font-bold">M</span>
+                <span className="text-emerald-400 text-sm font-bold">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Merchant</p>
-                <p className="text-xs text-gray-500 truncate">0x308c...46db</p>
+                <p className="text-sm font-medium truncate">{displayName}</p>
+                <p className="text-xs text-gray-500 truncate">{displayEmail || "0x308c...46db"}</p>
               </div>
               <div className="w-2 h-2 rounded-full bg-emerald-400" />
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="w-full text-sm text-gray-400 hover:text-white border border-[#1e1e2e] hover:border-gray-600 py-2 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {loggingOut ? "Signing out..." : "Log out"}
+            </button>
           </div>
         </aside>
 

@@ -1,31 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
 import DashboardLayout from "@/components/dashboard/Layout";
-
-type Invoice = {
-  id: string;
-  amount: number;
-  currency: string;
-  usdc_amount: number;
-  status: string;
-  created_at: string;
-};
+import { useUserInvoices } from "@/lib/invoices/useUserInvoices";
 
 export default function AnalyticsPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetch() {
-      const { data, error } = await supabase.from("invoices").select("*").order("created_at", { ascending: false });
-      if (!error && data) setInvoices(data);
-      setLoading(false);
-    }
-    fetch();
-  }, []);
+  const { invoices, loading } = useUserInvoices();
 
   const totalUsdc = invoices.reduce((sum, i) => sum + Number(i.usdc_amount), 0).toFixed(2);
   const paidUsdc = invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + Number(i.usdc_amount), 0).toFixed(2);

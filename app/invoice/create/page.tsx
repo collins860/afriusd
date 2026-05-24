@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { createInvoice } from "@/lib/invoices/db";
+import { supabase } from "@/lib/supabase/client";
 
 const currencies = [
   { code: "NGN", symbol: "₦", name: "Nigerian Naira", rate: 0.00065 },
@@ -14,6 +16,7 @@ const currencies = [
 ];
 
 export default function CreateInvoice() {
+  const { user } = useAuth();
   const [form, setForm] = useState({
     customerName: "",
     customerEmail: "",
@@ -37,20 +40,24 @@ export default function CreateInvoice() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase.from("invoices").insert({
-      id: invoiceId,
-      merchant_id: "0x308c092244ca7266134acd2fff755af08a7a46db",
-      customer_name: form.customerName,
-      customer_email: form.customerEmail,
-      description: form.description,
-      amount: parseFloat(form.amount),
-      currency: form.currency,
-      usdc_amount: parseFloat(usdcAmount),
-      status: "pending",
-      due_date: form.dueDate,
-    });
+    if (!user) {
+      toast.error("You must be signed in to create an invoice");
+      return;
+    }
 
-    if (error) {
+    try {
+      await createInvoice(supabase, user.id, invoiceId, {
+        merchant_id: "0x308c092244ca7266134acd2fff755af08a7a46db",
+        customer_name: form.customerName,
+        customer_email: form.customerEmail,
+        description: form.description,
+        amount: parseFloat(form.amount),
+        currency: form.currency,
+        usdc_amount: parseFloat(usdcAmount),
+        status: "pending",
+        due_date: form.dueDate,
+      });
+    } catch (error) {
       console.error(error);
       toast.error("Failed to save invoice");
       return;

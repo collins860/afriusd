@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NavbarAuth } from "@/components/marketing/NavbarAuth";
 
 export default function Home() {
   return (
@@ -17,18 +18,7 @@ export default function Home() {
             <a href="#how-it-works" className="text-sm text-gray-400 hover:text-white transition-colors">How it works</a>
             <a href="#benefits" className="text-sm text-gray-400 hover:text-white transition-colors">Benefits</a>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard">
-              <button className="text-sm text-gray-400 hover:text-white transition-colors px-4 py-2">
-                Sign in
-              </button>
-            </Link>
-            <Link href="/dashboard">
-              <button className="text-sm bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg transition-colors font-medium">
-                Get Started
-              </button>
-            </Link>
-          </div>
+          <NavbarAuth />
         </div>
       </nav>
 
@@ -48,12 +38,12 @@ export default function Home() {
             Create invoices in local currency and receive instant USDC settlement on Arc Network. Built for African freelancers, merchants, and businesses.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/dashboard">
+            <Link href="/signup">
               <button className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all glow-emerald">
                 Start Accepting Payments
               </button>
             </Link>
-            <Link href="/dashboard">
+            <Link href="/login">
               <button className="w-full sm:w-auto border border-[#1e1e2e] hover:border-gray-600 text-gray-300 px-8 py-4 rounded-xl font-semibold text-lg transition-all">
                 View Dashboard →
               </button>
@@ -208,7 +198,7 @@ export default function Home() {
             <div className="relative z-10">
               <h2 className="text-4xl font-bold mb-4">Ready to get paid?</h2>
               <p className="text-gray-400 text-lg mb-8">Join African merchants already using AfriUSD to accept global payments.</p>
-              <Link href="/dashboard">
+              <Link href="/signup">
                 <button className="bg-emerald-500 hover:bg-emerald-400 text-white px-10 py-4 rounded-xl font-semibold text-lg transition-all glow-emerald">
                   Launch App →
                 </button>

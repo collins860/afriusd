@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Web3Provider } from "@/lib/blockchain/provider";
+import { AuthProvider } from "@/lib/auth/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0f] text-white min-h-screen`}
       >
-        <Web3Provider>
-          {children}
-        </Web3Provider>
+        <AuthProvider>
+          <Web3Provider>
+            {children}
+          </Web3Provider>
+        </AuthProvider>
         <Toaster
           theme="dark"
           position="top-right"
