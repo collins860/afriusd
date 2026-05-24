@@ -39,10 +39,6 @@ export default function Home() {
           <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-3xl" />
         </div>
         <div className="max-w-5xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-2 mb-8">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            {/* <span className="text-emerald-400 text-sm font-medium">Built on Arc Network · Powered by USDC</span> */}
-          </div>
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
             Accept Stablecoin
             <br />
