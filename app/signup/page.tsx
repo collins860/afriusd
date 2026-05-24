@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signUp } from "@/lib/auth/actions";
+import { getAuthCallbackUrl } from "@/lib/auth/site-url";
 import { toast } from "sonner";
 
 export default function SignupPage() {
@@ -16,7 +17,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = await signUp(email, password);
+      const data = await signUp(email, password, getAuthCallbackUrl("/dashboard"));
       if (data.session) {
         toast.success("Account created!");
         router.push("/dashboard");
