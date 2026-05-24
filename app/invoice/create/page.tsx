@@ -140,7 +140,7 @@ setSubmitted(true);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <header className="border-b border-[#1e1e2e] px-8 py-4 flex items-center justify-between">
+      <header className="border-b border-[#1e1e2e] px-4 lg:px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/dashboard">
             <button className="text-gray-400 hover:text-white transition-colors text-sm">
@@ -158,8 +158,8 @@ setSubmitted(true);
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-8 py-10 grid grid-cols-3 gap-8">
-        <div className="col-span-2">
+      <div className="max-w-5xl mx-auto px-4 lg:px-8 py-6 lg:py-10 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="glass rounded-xl border border-[#1e1e2e] p-6">
               <h2 className="font-semibold mb-5">Customer Details</h2>
