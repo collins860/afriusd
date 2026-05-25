@@ -138,9 +138,15 @@ export async function markInvoicePaid(
     payment_tx_hash: paymentTxHash,
   };
 
+  const updatePayload: Record<string, unknown> = { data: nextData };
+
+  // Keep legacy flat columns in sync when the table still has them.
+  updatePayload.status = "paid";
+  updatePayload.payment_tx_hash = paymentTxHash;
+
   const { error } = await supabase
     .from("invoices")
-    .update({ data: nextData })
+    .update(updatePayload)
     .eq("id", invoiceId);
 
   if (error) throw error;

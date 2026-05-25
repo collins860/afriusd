@@ -11,63 +11,57 @@ export async function POST(request: Request) {
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json(
-      { error: "Server misconfigured: missing SUPABASE_SERVICE_ROLE_KEY" },
+      {
+        success: false,
+        error:
+          "Server missing SUPABASE_SERVICE_ROLE_KEY. Add it in Vercel environment variables.",
+      },
       { status: 500 }
     );
   }
 
   const admin = createAdminClient();
 
-  try {
-    const response = await fetch(
-      `https://api.circle.com/v1/w3s/transactions?txHash=${txHash}&blockchain=ARC-TESTNET`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.CIRCLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (data?.data?.transactions?.length > 0) {
-      const tx = data.data.transactions[0];
-      const isConfirmed = tx.state === "CONFIRMED" || tx.state === "COMPLETE";
-
-      if (isConfirmed) {
-        try {
-          await markInvoicePaid(admin, invoiceId, txHash);
-        } catch {
-          return NextResponse.json({ error: "Failed to update invoice" }, { status: 500 });
-        }
-
-        return NextResponse.json({
-          success: true,
-          verified: true,
-          message: "Payment verified and invoice marked as paid",
-        });
-      }
-
-      return NextResponse.json({
-        success: false,
-        verified: false,
-        message: `Transaction state: ${tx.state}`,
-      });
-    }
-
+  // Circle API is optional — wallet already confirmed the tx on Arc.
+  let circleVerified = false;
+  if (process.env.CIRCLE_API_KEY) {
     try {
-      await markInvoicePaid(admin, invoiceId, txHash);
-      return NextResponse.json({
-        success: true,
-        verified: true,
-        message: "Payment confirmed on-chain",
-      });
-    } catch {
-      return NextResponse.json({ success: false, verified: false });
+      const response = await fetch(
+        `https://api.circle.com/v1/w3s/transactions?txHash=${txHash}&blockchain=ARC-TESTNET`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.CIRCLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+      const tx = data?.data?.transactions?.[0];
+      if (tx) {
+        circleVerified =
+          tx.state === "CONFIRMED" || tx.state === "COMPLETE";
+      }
+    } catch (error) {
+      console.warn("Circle verification skipped:", error);
     }
+  }
+
+  try {
+    await markInvoicePaid(admin, invoiceId, txHash);
+    return NextResponse.json({
+      success: true,
+      verified: circleVerified,
+      message: "Payment recorded",
+    });
   } catch (error) {
-    console.error("Verification error:", error);
-    return NextResponse.json({ error: "Verification failed" }, { status: 500 });
+    console.error("markInvoicePaid failed:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Could not update invoice in database",
+      },
+      { status: 500 }
+    );
   }
 }

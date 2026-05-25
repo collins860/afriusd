@@ -74,13 +74,26 @@ export default function InvoicePage() {
 
     const result = await response.json();
 
-    if (result.success) {
+    if (response.ok && result.success) {
       toast.dismiss();
-      toast.success("Payment verified and confirmed!");
+      toast.success("Payment confirmed!");
+      setInvoice((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "paid",
+              payment_tx_hash: txHash,
+            }
+          : prev
+      );
       setStep("success");
     } else {
       toast.dismiss();
-      toast.error("Payment verification failed. Please contact support.");
+      toast.error(
+        result.error ||
+          "Payment sent on-chain but we could not update the invoice. Add SUPABASE_SERVICE_ROLE_KEY on Vercel."
+      );
+      setStep("view");
     }
   }
 }
