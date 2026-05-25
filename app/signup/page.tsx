@@ -1,23 +1,51 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signUp } from "@/lib/auth/actions";
 import { getAuthCallbackUrl } from "@/lib/auth/site-url";
 import { toast } from "sonner";
+import {
+  AuthBrand,
+  AuthCard,
+  AuthCheckbox,
+  AuthField,
+  AuthLink,
+  AuthPageShell,
+  AuthPasswordField,
+  AuthPrimaryButton,
+  HumanVerificationPlaceholder,
+} from "@/components/auth/AuthForm";
 
 export default function SignupPage() {
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!termsAccepted) {
+      toast.error("Please accept the terms and policies to continue.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = await signUp(email, password, getAuthCallbackUrl("/dashboard"));
+      const data = await signUp({
+        email,
+        password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        emailRedirectTo: getAuthCallbackUrl("/dashboard"),
+        marketingConsent,
+      });
+
       if (data.session) {
         toast.success("Account created!");
         router.push("/dashboard");
@@ -33,64 +61,95 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <Link href="/" className="flex items-center gap-2 justify-center mb-8">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">A</span>
+    <AuthPageShell>
+      <AuthCard>
+        <AuthBrand />
+
+        <p className="text-sm text-gray-500 mb-2">
+          Already have an AfriUSD account?{" "}
+          <AuthLink href="/login">Sign in</AuthLink>
+        </p>
+
+        <h1 className="text-2xl sm:text-[1.65rem] font-semibold text-white leading-tight mb-8">
+          Create an AfriUSD account to access your dashboard
+        </h1>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <AuthField
+              id="firstName"
+              label="First name"
+              name="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="First name"
+              required
+              autoComplete="given-name"
+            />
+            <AuthField
+              id="lastName"
+              label="Last name"
+              name="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last name"
+              required
+              autoComplete="family-name"
+            />
           </div>
-          <span className="font-semibold text-lg">AfriUSD</span>
-        </Link>
 
-        <div className="glass rounded-xl border border-[#1e1e2e] p-8">
-          <h1 className="text-2xl font-bold mb-1">Create account</h1>
-          <p className="text-gray-400 text-sm mb-6">
-            Start managing invoices with AfriUSD
-          </p>
+          <AuthField
+            id="email"
+            label="Email"
+            type="email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+            autoComplete="email"
+          />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-400 block mb-2">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                required
-                autoComplete="email"
-                className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 block mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
-                required
-                minLength={6}
-                autoComplete="new-password"
-                className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-colors"
+          <AuthPasswordField
+            id="password"
+            label="Password"
+            value={password}
+            onChange={setPassword}
+            placeholder="Password"
+            autoComplete="new-password"
+          />
+
+          <div className="space-y-4 pt-1">
+            <AuthCheckbox
+              id="marketing"
+              checked={marketingConsent}
+              onChange={setMarketingConsent}
             >
-              {loading ? "Creating account..." : "Sign up"}
-            </button>
-          </form>
+              I agree to receive product updates and communications from AfriUSD.
+              You can unsubscribe at any time. See our{" "}
+              <AuthLink href="/">Privacy Policy</AuthLink>.
+            </AuthCheckbox>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Already have an account?{" "}
-            <Link href="/login" className="text-emerald-400 hover:text-emerald-300">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
-    </main>
+            <AuthCheckbox
+              id="terms"
+              checked={termsAccepted}
+              onChange={setTermsAccepted}
+              required
+            >
+              I agree to the AfriUSD{" "}
+              <AuthLink href="/">Terms of Service</AuthLink>,{" "}
+              <AuthLink href="/">Privacy Policy</AuthLink>, and{" "}
+              <AuthLink href="/">Acceptable Use Policy</AuthLink>.
+            </AuthCheckbox>
+          </div>
+
+          <HumanVerificationPlaceholder />
+
+          <AuthPrimaryButton loading={loading} disabled={!termsAccepted}>
+            {loading ? "Creating account..." : "Create account"}
+          </AuthPrimaryButton>
+        </form>
+      </AuthCard>
+    </AuthPageShell>
   );
 }

@@ -1,11 +1,19 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "@/lib/auth/actions";
 import { toast } from "sonner";
+import {
+  AuthBrand,
+  AuthCard,
+  AuthField,
+  AuthLink,
+  AuthPageShell,
+  AuthPasswordField,
+  AuthPrimaryButton,
+} from "@/components/auth/AuthForm";
 
 function LoginForm() {
   const router = useRouter();
@@ -32,75 +40,58 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <Link href="/" className="flex items-center gap-2 justify-center mb-8">
-        <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
-          <span className="text-white font-bold text-sm">A</span>
-        </div>
-        <span className="font-semibold text-lg">AfriUSD</span>
-      </Link>
+    <AuthCard>
+      <AuthBrand />
 
-      <div className="glass rounded-xl border border-[#1e1e2e] p-8">
-        <h1 className="text-2xl font-bold mb-1">Sign in</h1>
-        <p className="text-gray-400 text-sm mb-6">
-          Access your dashboard and invoices
-        </p>
+      <p className="text-sm text-gray-500 mb-2">
+        Don&apos;t have an account?{" "}
+        <AuthLink href="/signup">Create account</AuthLink>
+      </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm text-gray-400 block mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              required
-              autoComplete="email"
-              className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
-          </div>
-          <div>
-            <label className="text-sm text-gray-400 block mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-              className="w-full bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-colors"
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
+      <h1 className="text-2xl sm:text-[1.65rem] font-semibold text-white leading-tight mb-8">
+        Sign in to your AfriUSD dashboard
+      </h1>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          No account?{" "}
-          <Link href="/signup" className="text-emerald-400 hover:text-emerald-300">
-            Sign up
-          </Link>
-        </p>
-      </div>
-    </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <AuthField
+          id="email"
+          label="Email"
+          type="email"
+          name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          required
+          autoComplete="email"
+        />
+
+        <AuthPasswordField
+          id="password"
+          label="Password"
+          value={password}
+          onChange={setPassword}
+          placeholder="Password"
+          autoComplete="current-password"
+        />
+
+        <AuthPrimaryButton loading={loading}>
+          {loading ? "Signing in..." : "Sign in"}
+        </AuthPrimaryButton>
+      </form>
+    </AuthCard>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center p-6">
+    <AuthPageShell>
       <Suspense
         fallback={
-          <div className="text-gray-500 text-sm">Loading...</div>
+          <div className="text-center text-sm text-gray-500 py-12">Loading...</div>
         }
       >
         <LoginForm />
       </Suspense>
-    </main>
+    </AuthPageShell>
   );
 }

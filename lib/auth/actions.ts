@@ -1,18 +1,31 @@
 import { supabase } from "@/lib/supabase/client";
+import { upsertProfile } from "@/lib/auth/profile";
+import type { SignUpInput } from "@/lib/auth/types";
 
-export async function signUp(
-  email: string,
-  password: string,
-  emailRedirectTo: string
-) {
+export async function signUp(input: SignUpInput) {
   const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
+    email: input.email,
+    password: input.password,
     options: {
-      emailRedirectTo,
+      emailRedirectTo: input.emailRedirectTo,
+      data: {
+        first_name: input.firstName,
+        last_name: input.lastName,
+        marketing_consent: input.marketingConsent ?? false,
+      },
     },
   });
   if (error) throw error;
+
+  if (data.user && data.session) {
+    await upsertProfile(supabase, data.user.id, {
+      first_name: input.firstName,
+      last_name: input.lastName,
+      email: input.email,
+      marketing_consent: input.marketingConsent,
+    });
+  }
+
   return data;
 }
 
