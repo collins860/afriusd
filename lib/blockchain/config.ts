@@ -1,16 +1,18 @@
 import { defineChain } from "viem";
 
+/** Arc Testnet — https://docs.arc.io/arc/references/connect-to-arc */
 export const arcTestnet = defineChain({
   id: 5042002,
   name: "Arc Testnet",
   nativeCurrency: {
-    decimals: 6,
+    decimals: 18,
     name: "USDC",
     symbol: "USDC",
   },
   rpcUrls: {
     default: {
       http: ["https://rpc.testnet.arc.network"],
+      webSocket: ["wss://rpc.testnet.arc.network"],
     },
   },
   blockExplorers: {
@@ -22,8 +24,11 @@ export const arcTestnet = defineChain({
   testnet: true,
 });
 
+/** ERC-20 USDC on Arc Testnet (6 decimals) — https://docs.arc.io/arc/references/contract-addresses */
 export const USDC_CONTRACT_ADDRESS =
-  "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" as `0x${string}`;
+  "0x3600000000000000000000000000000000000000" as `0x${string}`;
+
+export const USDC_DECIMALS = 6;
 
 export const USDC_ABI = [
   {

@@ -3,10 +3,21 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import {
+  useAccount,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { parseUnits } from "viem";
-import { USDC_CONTRACT_ADDRESS, USDC_ABI } from "@/lib/blockchain/config";
+import {
+  arcTestnet,
+  USDC_CONTRACT_ADDRESS,
+  USDC_ABI,
+  USDC_DECIMALS,
+} from "@/lib/blockchain/config";
+import { getWalletErrorMessage } from "@/lib/blockchain/errors";
+import { ArcNetworkGuard } from "@/components/wallet/ArcNetworkGuard";
 import { supabase } from "@/lib/supabase/client";
 import { fetchInvoiceById } from "@/lib/invoices/db";
 import type { Invoice } from "@/lib/invoices/types";
@@ -20,11 +31,16 @@ export default function InvoicePage() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"view" | "paying" | "success">("view");
 
-  const { address, isConnected } = useAccount();
-  const { writeContract, data: txHash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: txHash,
-  });
+  const { address, isConnected, chainId } = useAccount();
+  const { writeContract, data: txHash, isPending, error: writeError } =
+    useWriteContract();
+  const { isLoading: isConfirming, isSuccess, error: confirmError } =
+    useWaitForTransactionReceipt({
+      hash: txHash,
+      chainId: arcTestnet.id,
+    });
+
+  const onArcNetwork = !isConnected || chainId === arcTestnet.id;
 
   useEffect(() => {
     async function loadInvoice() {
@@ -71,28 +87,42 @@ export default function InvoicePage() {
     markPaid();
   }, [isSuccess, txHash, invoice]);
 
+  useEffect(() => {
+    if (writeError) {
+      toast.error(getWalletErrorMessage(writeError));
+      setStep("view");
+    }
+  }, [writeError]);
+
+  useEffect(() => {
+    if (confirmError) {
+      toast.error(getWalletErrorMessage(confirmError));
+      setStep("view");
+    }
+  }, [confirmError]);
+
   const handlePay = async () => {
     if (!isConnected) {
       toast.error("Please connect your wallet first");
       return;
     }
+    if (!onArcNetwork) {
+      toast.error("Switch MetaMask to Arc Testnet first");
+      return;
+    }
     if (!invoice) return;
 
-    try {
-      setStep("paying");
-      writeContract({
-        address: USDC_CONTRACT_ADDRESS,
-        abi: USDC_ABI,
-        functionName: "transfer",
-        args: [
-          invoice.merchant_id as `0x${string}`,
-          parseUnits(invoice.usdc_amount.toString(), 6),
-        ],
-      });
-    } catch (error) {
-      toast.error("Transaction failed. Please try again.");
-      setStep("view");
-    }
+    setStep("paying");
+    writeContract({
+      chainId: arcTestnet.id,
+      address: USDC_CONTRACT_ADDRESS,
+      abi: USDC_ABI,
+      functionName: "transfer",
+      args: [
+        invoice.merchant_id as `0x${string}`,
+        parseUnits(invoice.usdc_amount.toString(), USDC_DECIMALS),
+      ],
+    });
   };
 
   if (loading) {
@@ -170,7 +200,7 @@ export default function InvoicePage() {
           </div>
           <span className="font-semibold">AfriUSD</span>
         </div>
-        <ConnectButton />
+        <ConnectButton chainStatus="icon" showBalance={false} />
       </header>
 
       <div className="max-w-2xl mx-auto px-6 py-12">
@@ -238,13 +268,25 @@ export default function InvoicePage() {
           </div>
         ) : !isConnected ? (
           <div className="text-center space-y-4">
-            <p className="text-gray-400 text-sm">Connect your wallet to pay this invoice</p>
+            <p className="text-gray-400 text-sm">Connect MetaMask to pay this invoice</p>
+            <p className="text-gray-500 text-xs">
+              You need Arc Testnet USDC from{" "}
+              <a
+                href="https://faucet.circle.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-400 hover:underline"
+              >
+                faucet.circle.com
+              </a>
+            </p>
             <div className="flex justify-center">
-              <ConnectButton />
+              <ConnectButton chainStatus="full" />
             </div>
           </div>
         ) : (
           <div className="glass rounded-xl border border-emerald-500/20 p-6 space-y-4">
+            <ArcNetworkGuard />
             <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
                 <div className="w-3 h-3 rounded-full bg-emerald-400" />
@@ -269,7 +311,7 @@ export default function InvoicePage() {
               </div>
               <button
                 onClick={handlePay}
-                disabled={isPending || isConfirming}
+                disabled={isPending || isConfirming || !onArcNetwork}
                 className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold transition-colors"
               >
                 {isPending ? "Confirm in wallet..." : isConfirming ? "Confirming on Arc..." : `Pay ${invoice.usdc_amount} USDC`}
