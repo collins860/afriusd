@@ -8,13 +8,11 @@ import { toast } from "sonner";
 import {
   AuthBrand,
   AuthCard,
-  AuthCheckbox,
   AuthField,
   AuthLink,
   AuthPageShell,
   AuthPasswordField,
   AuthPrimaryButton,
-  HumanVerificationPlaceholder,
 } from "@/components/auth/AuthForm";
 
 export default function SignupPage() {
@@ -23,36 +21,34 @@ export default function SignupPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [marketingConsent, setMarketingConsent] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!termsAccepted) {
-      toast.error("Please accept the terms and policies to continue.");
-      return;
-    }
-
     setLoading(true);
     try {
-      const data = await signUp({
+      const result = await signUp({
         email,
         password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         emailRedirectTo: getAuthCallbackUrl("/dashboard"),
-        marketingConsent,
       });
 
-      if (data.session) {
+      if (result.status === "existing_email") {
+        toast.error("This email is already registered. Please sign in instead.");
+        return;
+      }
+
+      if (result.status === "created") {
         toast.success("Account created!");
         router.push("/dashboard");
         router.refresh();
-      } else {
-        toast.success("Check your email to confirm your account.");
+        return;
       }
+
+      toast.success("Check your email to confirm your account.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign up failed");
     } finally {
@@ -119,33 +115,7 @@ export default function SignupPage() {
             autoComplete="new-password"
           />
 
-          <div className="space-y-4 pt-1">
-            <AuthCheckbox
-              id="marketing"
-              checked={marketingConsent}
-              onChange={setMarketingConsent}
-            >
-              I agree to receive product updates and communications from AfriUSD.
-              You can unsubscribe at any time. See our{" "}
-              <AuthLink href="/">Privacy Policy</AuthLink>.
-            </AuthCheckbox>
-
-            <AuthCheckbox
-              id="terms"
-              checked={termsAccepted}
-              onChange={setTermsAccepted}
-              required
-            >
-              I agree to the AfriUSD{" "}
-              <AuthLink href="/">Terms of Service</AuthLink>,{" "}
-              <AuthLink href="/">Privacy Policy</AuthLink>, and{" "}
-              <AuthLink href="/">Acceptable Use Policy</AuthLink>.
-            </AuthCheckbox>
-          </div>
-
-          <HumanVerificationPlaceholder />
-
-          <AuthPrimaryButton loading={loading} disabled={!termsAccepted}>
+          <AuthPrimaryButton loading={loading}>
             {loading ? "Creating account..." : "Create account"}
           </AuthPrimaryButton>
         </form>

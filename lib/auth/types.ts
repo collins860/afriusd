@@ -6,3 +6,7 @@ export type SignUpInput = {
   emailRedirectTo: string;
   marketingConsent?: boolean;
 };
+
+export type SignUpResult = {
+  status: "created" | "confirm_email" | "existing_email";
+};
