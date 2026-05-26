@@ -10,10 +10,8 @@ const RESEND_COOLDOWN_SEC = 60;
 
 export function VerifyEmailPrompt({
   email,
-  onBack,
 }: {
   email: string;
-  onBack: () => void;
 }) {
   const router = useRouter();
   const [code, setCode] = useState("");
@@ -120,13 +118,7 @@ export function VerifyEmailPrompt({
       </div>
 
       <p className="text-center text-sm text-gray-500">
-        <button
-          type="button"
-          onClick={onBack}
-          className="text-gray-400 hover:text-white transition-colors"
-        >
-          ← Back to sign up
-        </button>
+        <AuthLink href="/signup">← Back to sign up</AuthLink>
         {" · "}
         <AuthLink href="/login">Sign in</AuthLink>
       </p>

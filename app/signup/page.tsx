@@ -14,12 +14,9 @@ import {
   AuthPasswordField,
   AuthPrimaryButton,
 } from "@/components/auth/AuthForm";
-import { VerifyEmailPrompt } from "@/components/auth/VerifyEmailPrompt";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"form" | "verify">("form");
-  const [pendingEmail, setPendingEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -51,8 +48,7 @@ export default function SignupPage() {
         return;
       }
 
-      setPendingEmail(result.email);
-      setStep("verify");
+      router.push(`/signup/verify?email=${encodeURIComponent(result.email)}`);
       toast.success("Check your email for a confirmation code or link.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign up failed");
@@ -65,74 +61,64 @@ export default function SignupPage() {
     <AuthPageShell>
       <AuthCard>
         <AuthBrand />
+        <p className="text-sm text-gray-500 mb-2">
+          Already have an AfriUSD account?{" "}
+          <AuthLink href="/login">Sign in</AuthLink>
+        </p>
 
-        {step === "verify" ? (
-          <VerifyEmailPrompt
-            email={pendingEmail}
-            onBack={() => setStep("form")}
+        <h1 className="text-2xl sm:text-[1.65rem] font-semibold text-white leading-tight mb-8">
+          Create an AfriUSD account to access your dashboard
+        </h1>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <AuthField
+              id="firstName"
+              label="First name"
+              name="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="First name"
+              required
+              autoComplete="given-name"
+            />
+            <AuthField
+              id="lastName"
+              label="Last name"
+              name="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last name"
+              required
+              autoComplete="family-name"
+            />
+          </div>
+
+          <AuthField
+            id="email"
+            label="Email"
+            type="email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+            autoComplete="email"
           />
-        ) : (
-          <>
-            <p className="text-sm text-gray-500 mb-2">
-              Already have an AfriUSD account?{" "}
-              <AuthLink href="/login">Sign in</AuthLink>
-            </p>
 
-            <h1 className="text-2xl sm:text-[1.65rem] font-semibold text-white leading-tight mb-8">
-              Create an AfriUSD account to access your dashboard
-            </h1>
+          <AuthPasswordField
+            id="password"
+            label="Password"
+            value={password}
+            onChange={setPassword}
+            placeholder="Password"
+            autoComplete="new-password"
+          />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <AuthField
-                  id="firstName"
-                  label="First name"
-                  name="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="First name"
-                  required
-                  autoComplete="given-name"
-                />
-                <AuthField
-                  id="lastName"
-                  label="Last name"
-                  name="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Last name"
-                  required
-                  autoComplete="family-name"
-                />
-              </div>
-
-              <AuthField
-                id="email"
-                label="Email"
-                type="email"
-                name="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                required
-                autoComplete="email"
-              />
-
-              <AuthPasswordField
-                id="password"
-                label="Password"
-                value={password}
-                onChange={setPassword}
-                placeholder="Password"
-                autoComplete="new-password"
-              />
-
-              <AuthPrimaryButton loading={loading}>
-                {loading ? "Creating account..." : "Create account"}
-              </AuthPrimaryButton>
-            </form>
-          </>
-        )}
+          <AuthPrimaryButton loading={loading}>
+            {loading ? "Creating account..." : "Create account"}
+          </AuthPrimaryButton>
+        </form>
       </AuthCard>
     </AuthPageShell>
   );
