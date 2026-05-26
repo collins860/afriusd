@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import { upsertProfile } from "@/lib/auth/profile";
+import { getAuthCallbackUrl } from "@/lib/auth/site-url";
 import type { SignUpInput, SignUpResult } from "@/lib/auth/types";
 
 function isExistingEmailError(error: { message?: string; code?: string }) {
@@ -71,7 +72,7 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
       msg.includes("email not confirmed") ||
       msg.includes("not confirmed")
     ) {
-      return { status: "confirm_email" };
+      return { status: "confirm_email", email: input.email };
     }
 
     if (
@@ -83,7 +84,54 @@ export async function signUp(input: SignUpInput): Promise<SignUpResult> {
     }
   }
 
-  return { status: "confirm_email" };
+  return { status: "confirm_email", email: input.email };
+}
+
+export async function resendConfirmationEmail(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: {
+      emailRedirectTo: getAuthCallbackUrl("/dashboard"),
+    },
+  });
+
+  if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("rate limit") || msg.includes("too many")) {
+      throw new Error("Too many emails sent. Please wait a few minutes and try again.");
+    }
+    if (msg.includes("already confirmed")) {
+      throw new Error("This email is already confirmed. Try signing in.");
+    }
+    throw error;
+  }
+}
+
+export async function verifyEmailCode(email: string, token: string) {
+  const code = token.trim();
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token: code,
+    type: "signup",
+  });
+
+  if (!error && data.session) {
+    return data;
+  }
+
+  const fallback = await supabase.auth.verifyOtp({
+    email,
+    token: code,
+    type: "email",
+  });
+
+  if (fallback.error) {
+    throw new Error("Invalid or expired code. Tap resend to get a new one.");
+  }
+
+  return fallback.data;
 }
 
 export async function signIn(email: string, password: string) {

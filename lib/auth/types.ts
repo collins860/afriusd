@@ -7,6 +7,7 @@ export type SignUpInput = {
   marketingConsent?: boolean;
 };
 
-export type SignUpResult = {
-  status: "created" | "confirm_email" | "existing_email";
-};
+export type SignUpResult =
+  | { status: "created" }
+  | { status: "existing_email" }
+  | { status: "confirm_email"; email: string };
