@@ -140,6 +140,13 @@ export async function signIn(email: string, password: string) {
     password,
   });
   if (error) throw error;
+
+  // Block login if email is not verified
+  if (data.user && !data.user.email_confirmed_at) {
+    await supabase.auth.signOut();
+    throw new Error("Please verify your email before signing in. Check your inbox for the confirmation code.");
+  }
+
   return data;
 }
 
