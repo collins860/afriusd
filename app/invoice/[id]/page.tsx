@@ -30,6 +30,7 @@ export default function InvoicePage() {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"view" | "paying" | "success">("view");
+  const [paymentProcessed, setPaymentProcessed] = useState(false);
 
   const { address, isConnected, chainId } = useAccount();
   const { writeContract, data: txHash, isPending, error: writeError } =
@@ -57,49 +58,46 @@ export default function InvoicePage() {
   }, [invoiceId]);
 
   // Mark invoice as paid after successful transaction
- const [paymentProcessed, setPaymentProcessed] = useState(false);
-
-useEffect(() => {
+  useEffect(() => {
     async function markPaid() {
-  if (isSuccess && txHash && invoice && !paymentProcessed) {
-    setPaymentProcessed(true);
-    toast.loading("Verifying payment...");
+      if (isSuccess && txHash && invoice && !paymentProcessed) {
+        setPaymentProcessed(true);
+        toast.loading("Verifying payment...");
 
-    // Call Circle API verification endpoint
-    const response = await fetch("/api/verify-payment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        txHash,
-        invoiceId: invoice.id,
-      }),
-    });
+        const response = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            txHash,
+            invoiceId: invoice.id,
+          }),
+        });
 
-    const result = await response.json();
+        const result = await response.json();
 
-    if (response.ok && result.success) {
-      toast.dismiss();
-      toast.success("Payment confirmed!");
-      setInvoice((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: "paid",
-              payment_tx_hash: txHash,
-            }
-          : prev
-      );
-      setStep("success");
-    } else {
-      toast.dismiss();
-      toast.error(
-        result.error ||
-          "Payment sent on-chain but we could not update the invoice. Add SUPABASE_SERVICE_ROLE_KEY on Vercel."
-      );
-      setStep("view");
+        if (response.ok && result.success) {
+          toast.dismiss();
+          toast.success("Payment confirmed!");
+          setInvoice((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: "paid",
+                  payment_tx_hash: txHash,
+                }
+              : prev
+          );
+          setStep("success");
+        } else {
+          toast.dismiss();
+          toast.error(
+            result.error ||
+              "Payment sent on-chain but we could not update the invoice. Add SUPABASE_SERVICE_ROLE_KEY on Vercel."
+          );
+          setStep("view");
+        }
+      }
     }
-  }
-}
     markPaid();
   }, [isSuccess, txHash, invoice, paymentProcessed]);
 
@@ -189,17 +187,19 @@ useEffect(() => {
             </div>
             <div className="border-t border-[#1e1e2e] pt-3">
               <p className="text-gray-400 text-xs mb-1">Transaction Hash</p>
-              
-               <a href={`https://testnet.arcscan.app/tx/${txHash}`}
+              <a
+                href={`https://testnet.arcscan.app/tx/${txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-emerald-400 text-xs font-mono truncate block hover:underline"
-              >{txHash}</a>
+              >
+                {txHash}
+              </a>
             </div>
           </div>
-          <Link href="/">
+          <Link href="/dashboard">
             <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
-              Return to AfriUSD
+              Go to Dashboard
             </button>
           </Link>
         </div>
@@ -269,24 +269,24 @@ useEffect(() => {
         </div>
 
         {invoice.status === "paid" ? (
-  <div className="glass rounded-xl border border-emerald-500/20 p-6 text-center">
-    <p className="text-emerald-400 font-semibold text-lg mb-2">✓ This invoice has been paid</p>
-    {invoice.payment_tx_hash && (
-      
-        href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs text-gray-400 hover:text-emerald-400 transition-colors"
-      >
-        View transaction on ArcScan →
-      </a>
-    )}
-    <Link href="/dashboard">
-      <button className="w-full mt-4 bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
-        Go to Dashboard
-      </button>
-    </Link>
-  </div>
+          <div className="glass rounded-xl border border-emerald-500/20 p-6 text-center">
+            <p className="text-emerald-400 font-semibold text-lg mb-2">✓ This invoice has been paid</p>
+            {invoice.payment_tx_hash && (
+              <a
+                href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-400 hover:text-emerald-400 transition-colors"
+              >
+                View transaction on ArcScan →
+              </a>
+            )}
+            <Link href="/dashboard">
+              <button className="w-full mt-4 bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
+                Go to Dashboard
+              </button>
+            </Link>
+          </div>
         ) : !isConnected ? (
           <div className="text-center space-y-4">
             <p className="text-gray-400 text-sm">Connect MetaMask to pay this invoice</p>
