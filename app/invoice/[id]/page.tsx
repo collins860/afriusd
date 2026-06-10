@@ -269,19 +269,24 @@ useEffect(() => {
         </div>
 
         {invoice.status === "paid" ? (
-          <div className="glass rounded-xl border border-emerald-500/20 p-6 text-center">
-            <p className="text-emerald-400 font-semibold text-lg mb-2">✓ This invoice has been paid</p>
-            {invoice.payment_tx_hash && (
-              <a
-                href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-gray-400 hover:text-emerald-400 transition-colors"
-              >
-                View transaction on ArcScan →
-              </a>
-            )}
-          </div>
+  <div className="glass rounded-xl border border-emerald-500/20 p-6 text-center">
+    <p className="text-emerald-400 font-semibold text-lg mb-2">✓ This invoice has been paid</p>
+    {invoice.payment_tx_hash && (
+      
+        href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-gray-400 hover:text-emerald-400 transition-colors"
+      >
+        View transaction on ArcScan →
+      </a>
+    )}
+    <Link href="/dashboard">
+      <button className="w-full mt-4 bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
+        Go to Dashboard
+      </button>
+    </Link>
+  </div>
         ) : !isConnected ? (
           <div className="text-center space-y-4">
             <p className="text-gray-400 text-sm">Connect MetaMask to pay this invoice</p>
