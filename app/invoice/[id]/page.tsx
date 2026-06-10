@@ -57,9 +57,12 @@ export default function InvoicePage() {
   }, [invoiceId]);
 
   // Mark invoice as paid after successful transaction
-  useEffect(() => {
+ const [paymentProcessed, setPaymentProcessed] = useState(false);
+
+useEffect(() => {
     async function markPaid() {
-  if (isSuccess && txHash && invoice) {
+  if (isSuccess && txHash && invoice && !paymentProcessed) {
+    setPaymentProcessed(true);
     toast.loading("Verifying payment...");
 
     // Call Circle API verification endpoint
@@ -98,7 +101,7 @@ export default function InvoicePage() {
   }
 }
     markPaid();
-  }, [isSuccess, txHash, invoice]);
+  }, [isSuccess, txHash, invoice, paymentProcessed]);
 
   useEffect(() => {
     if (writeError) {
