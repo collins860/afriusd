@@ -14,80 +14,59 @@ const statusStyles: Record<string, string> = {
 
 function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
   const paymentLink = `${typeof window !== "undefined" ? window.location.origin : ""}/invoice/${invoice.id}`;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md bg-[#0f0f1a] border border-[#1e1e2e] rounded-2xl p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl border"
+        style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border)" }}
+        onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#1a1a24] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--bg-input)" }}>
               <span className="text-base">📄</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">{invoice.customer_name}</p>
-              <p className="text-xs text-gray-500">{invoice.id}</p>
+              <p className="text-sm font-semibold">{invoice.customer_name}</p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>{invoice.id}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-xl leading-none">✕</button>
+          <button onClick={onClose} className="text-xl leading-none hover:opacity-70" style={{ color: "var(--text-muted)" }}>✕</button>
         </div>
-
-        {/* Status */}
         <div className="flex items-center justify-between mb-5">
           <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusStyles[invoice.status] || statusStyles.pending}`}>
             {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
           </span>
-          <p className="text-xl font-bold text-white">{invoice.usdc_amount} USDC</p>
+          <p className="text-xl font-bold">{invoice.usdc_amount} USDC</p>
         </div>
-
-        {/* Details */}
-        <div className="space-y-3 bg-[#1a1a24] rounded-xl p-4 mb-5">
-          <DetailRow label="Customer Email" value={invoice.customer_email} />
-          <DetailRow label="Description" value={invoice.description} />
-          <DetailRow label="Amount" value={`${invoice.amount} ${invoice.currency}`} />
-          <DetailRow label="USDC Amount" value={`${invoice.usdc_amount} USDC`} />
-          <DetailRow label="Date Created" value={invoice.created_at?.slice(0, 10)} />
-          <DetailRow label="Due Date" value={invoice.due_date?.slice(0, 10) ?? "—"} />
-          {invoice.status === "paid" && invoice.payment_tx_hash && (
-            <DetailRow label="Transaction Hash" value={invoice.payment_tx_hash} truncate />
-          )}
+        <div className="space-y-3 rounded-xl p-4 mb-5" style={{ backgroundColor: "var(--bg-input)" }}>
+          {[
+            { label: "Customer Email", value: invoice.customer_email },
+            { label: "Description", value: invoice.description },
+            { label: "Amount", value: `${invoice.amount} ${invoice.currency}` },
+            { label: "USDC Amount", value: `${invoice.usdc_amount} USDC` },
+            { label: "Date Created", value: invoice.created_at?.slice(0, 10) },
+            { label: "Due Date", value: invoice.due_date?.slice(0, 10) ?? "—" },
+          ].map((row) => (
+            <div key={row.label} className="flex justify-between gap-4 text-sm">
+              <span className="flex-shrink-0" style={{ color: "var(--text-muted)" }}>{row.label}</span>
+              <span className="text-right">{row.value}</span>
+            </div>
+          ))}
         </div>
-
-        {/* Payment Link */}
         {invoice.status !== "paid" && (
           <div className="mb-5">
-            <p className="text-xs text-gray-500 mb-2">Payment Link</p>
-            <div className="flex items-center gap-2 bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-3 py-2">
-              <p className="text-xs text-gray-300 truncate flex-1">{paymentLink}</p>
-              <button
-                onClick={() => navigator.clipboard.writeText(paymentLink)}
-                className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors flex-shrink-0"
-              >
-                Copy
-              </button>
+            <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>Payment Link</p>
+            <div className="flex items-center gap-2 border rounded-lg px-3 py-2" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
+              <p className="text-xs truncate flex-1" style={{ color: "var(--text-secondary)" }}>{paymentLink}</p>
+              <button onClick={() => navigator.clipboard.writeText(paymentLink)} className="text-xs text-emerald-400 hover:text-emerald-300 flex-shrink-0">Copy</button>
             </div>
           </div>
         )}
-
-        {/* Actions */}
         <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 border border-[#1e1e2e] hover:border-gray-600 text-gray-300 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Close
-          </button>
+          <button onClick={onClose} className="flex-1 border py-2 rounded-lg text-sm font-medium hover:opacity-80"
+            style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>Close</button>
           {invoice.status !== "paid" && (
             <Link href={`/invoice/${invoice.id}`} className="flex-1">
-              <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-medium transition-colors">
-                View Payment Page
-              </button>
+              <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-medium">View Payment Page</button>
             </Link>
           )}
         </div>
@@ -96,154 +75,113 @@ function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => v
   );
 }
 
-function DetailRow({ label, value, truncate }: { label: string; value: string; truncate?: boolean }) {
-  return (
-    <div className="flex justify-between gap-4 text-sm">
-      <span className="text-gray-500 flex-shrink-0">{label}</span>
-      <span className={`text-white text-right ${truncate ? "truncate max-w-[180px]" : ""}`}>{value}</span>
-    </div>
-  );
-}
-
 export default function InvoicesPage() {
   const { invoices, loading } = useUserInvoices();
   const [filter, setFilter] = useState("all");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-
   const filtered = filter === "all" ? invoices : invoices.filter((i) => i.status === filter);
 
   return (
     <DashboardLayout>
-      {selectedInvoice && (
-        <InvoiceModal invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />
-      )}
+      {selectedInvoice && <InvoiceModal invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />}
 
-      <header className="border-b border-[#1e1e2e] px-4 lg:px-8 py-4 flex items-center justify-between sticky top-0 bg-[#0a0a0f]/80 backdrop-blur-md z-10">
+      <header className="border-b px-4 lg:px-8 py-4 flex items-center justify-between sticky top-0 backdrop-blur-md z-10"
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--header-bg)" }}>
         <div>
           <h1 className="text-lg lg:text-xl font-semibold">Invoices</h1>
-          <p className="text-gray-500 text-xs lg:text-sm">{invoices.length} total invoices</p>
+          <p className="text-xs lg:text-sm" style={{ color: "var(--text-muted)" }}>{invoices.length} total invoices</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-2 bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-3 py-2">
+          <div className="hidden sm:flex items-center gap-2 border rounded-lg px-3 py-2" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-sm text-gray-300">Arc Testnet</span>
+            <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Arc Testnet</span>
           </div>
           <Link href="/invoice/create">
-            <button className="bg-emerald-500 hover:bg-emerald-400 text-white px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors">
-              + New Invoice
-            </button>
+            <button className="bg-emerald-500 hover:bg-emerald-400 text-white px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-medium">+ New Invoice</button>
           </Link>
         </div>
       </header>
 
       <div className="p-4 lg:p-8">
-        {/* Filter Tabs */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
           {["all", "pending", "paid", "overdue"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
+            <button key={f} onClick={() => setFilter(f)}
               className={`px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-medium transition-all capitalize whitespace-nowrap ${
-                filter === f
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                  : "text-gray-400 hover:text-white bg-[#1a1a24] border border-[#1e1e2e]"
+                filter === f ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "border hover:opacity-80"
               }`}
-            >
+              style={filter !== f ? { backgroundColor: "var(--bg-input)", borderColor: "var(--border)", color: "var(--text-secondary)" } : {}}>
               {f === "all" ? `All (${invoices.length})` : f}
             </button>
           ))}
         </div>
 
-        {/* Mobile Invoice Cards */}
+        {/* Mobile Cards */}
         <div className="lg:hidden space-y-3">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Loading...</div>
+            <div className="p-8 text-center" style={{ color: "var(--text-muted)" }}>Loading...</div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500 mb-4">No invoices found</p>
-              <Link href="/invoice/create">
-                <button className="bg-emerald-500 text-white px-6 py-2 rounded-lg text-sm font-medium">Create Invoice</button>
-              </Link>
+              <p className="mb-4" style={{ color: "var(--text-muted)" }}>No invoices found</p>
+              <Link href="/invoice/create"><button className="bg-emerald-500 text-white px-6 py-2 rounded-lg text-sm font-medium">Create Invoice</button></Link>
             </div>
-          ) : (
-            filtered.map((invoice) => (
-              <div
-                key={invoice.id}
-                className="glass rounded-xl border border-[#1e1e2e] p-4 cursor-pointer hover:border-emerald-500/30 transition-colors"
-                onClick={() => setSelectedInvoice(invoice)}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-medium">{invoice.customer_name}</p>
-                    <p className="text-xs text-gray-500">{invoice.customer_email}</p>
-                    <p className="text-xs text-gray-600 mt-0.5">{invoice.id}</p>
-                  </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusStyles[invoice.status] || statusStyles.pending}`}>
-                    {invoice.status}
-                  </span>
+          ) : filtered.map((invoice) => (
+            <div key={invoice.id} className="glass rounded-xl p-4 cursor-pointer hover:border-emerald-500/30 transition-colors"
+              onClick={() => setSelectedInvoice(invoice)}>
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="font-medium">{invoice.customer_name}</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{invoice.customer_email}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{invoice.id}</p>
                 </div>
-                <div className="flex items-center justify-between pt-3 border-t border-[#1e1e2e]">
-                  <div>
-                    <p className="text-xs text-gray-500">Amount</p>
-                    <p className="text-sm font-medium">{invoice.currency} {Number(invoice.amount).toLocaleString()}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">USDC</p>
-                    <p className="text-sm font-bold text-emerald-400">{invoice.usdc_amount} USDC</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Due</p>
-                    <p className="text-xs text-gray-300">{invoice.due_date || "—"}</p>
-                  </div>
+                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusStyles[invoice.status] || statusStyles.pending}`}>{invoice.status}</span>
+              </div>
+              <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: "var(--border)" }}>
+                <div>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>Amount</p>
+                  <p className="text-sm font-medium">{invoice.currency} {Number(invoice.amount).toLocaleString()}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>USDC</p>
+                  <p className="text-sm font-bold text-emerald-400">{invoice.usdc_amount} USDC</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>Due</p>
+                  <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{invoice.due_date || "—"}</p>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
 
         {/* Desktop Table */}
-        <div className="hidden lg:block glass rounded-xl border border-[#1e1e2e]">
-          <div className="grid grid-cols-6 gap-4 px-6 py-3 border-b border-[#1e1e2e] text-xs text-gray-500 font-medium uppercase tracking-wider">
+        <div className="hidden lg:block glass rounded-xl">
+          <div className="grid grid-cols-6 gap-4 px-6 py-3 border-b text-xs font-medium uppercase tracking-wider"
+            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
             <div className="col-span-2">Customer</div>
-            <div>Amount</div>
-            <div>USDC</div>
-            <div>Due Date</div>
-            <div>Status</div>
+            <div>Amount</div><div>USDC</div><div>Due Date</div><div>Status</div>
           </div>
           {loading ? (
-            <div className="p-8 text-center text-gray-500">Loading...</div>
+            <div className="p-8 text-center" style={{ color: "var(--text-muted)" }}>Loading...</div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500 mb-4">No invoices found</p>
-              <Link href="/invoice/create">
-                <button className="bg-emerald-500 text-white px-6 py-2 rounded-lg text-sm font-medium">Create Invoice</button>
-              </Link>
+              <p className="mb-4" style={{ color: "var(--text-muted)" }}>No invoices found</p>
+              <Link href="/invoice/create"><button className="bg-emerald-500 text-white px-6 py-2 rounded-lg text-sm font-medium">Create Invoice</button></Link>
             </div>
-          ) : (
-            <div className="divide-y divide-[#1e1e2e]">
-              {filtered.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="grid grid-cols-6 gap-4 px-6 py-4 hover:bg-[#1a1a24]/50 transition-colors items-center cursor-pointer"
-                  onClick={() => setSelectedInvoice(invoice)}
-                >
-                  <div className="col-span-2">
-                    <p className="text-sm font-medium">{invoice.customer_name}</p>
-                    <p className="text-xs text-gray-500">{invoice.customer_email}</p>
-                    <p className="text-xs text-gray-600 mt-0.5">{invoice.id}</p>
-                  </div>
-                  <div><p className="text-sm font-medium">{invoice.currency} {Number(invoice.amount).toLocaleString()}</p></div>
-                  <div><p className="text-sm text-emerald-400 font-medium">{invoice.usdc_amount} USDC</p></div>
-                  <div><p className="text-sm text-gray-300">{invoice.due_date || "—"}</p></div>
-                  <div>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusStyles[invoice.status] || statusStyles.pending}`}>
-                      {invoice.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+          ) : filtered.map((invoice) => (
+            <div key={invoice.id} className="grid grid-cols-6 gap-4 px-6 py-4 border-b transition-colors items-center cursor-pointer hover:opacity-80"
+              style={{ borderColor: "var(--border)" }}
+              onClick={() => setSelectedInvoice(invoice)}>
+              <div className="col-span-2">
+                <p className="text-sm font-medium">{invoice.customer_name}</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>{invoice.customer_email}</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{invoice.id}</p>
+              </div>
+              <div><p className="text-sm font-medium">{invoice.currency} {Number(invoice.amount).toLocaleString()}</p></div>
+              <div><p className="text-sm text-emerald-400 font-medium">{invoice.usdc_amount} USDC</p></div>
+              <div><p className="text-sm" style={{ color: "var(--text-secondary)" }}>{invoice.due_date || "—"}</p></div>
+              <div><span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusStyles[invoice.status] || statusStyles.pending}`}>{invoice.status}</span></div>
             </div>
-          )}
+          ))}
         </div>
       </div>
     </DashboardLayout>
