@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { signOut } from "@/lib/auth/actions";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "▦", href: "/dashboard" },
@@ -65,6 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <div className="flex items-center gap-1.5 bg-[#1a1a24] border border-[#1e1e2e] rounded-lg px-2 py-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs text-gray-300">Arc Testnet</span>
@@ -137,6 +139,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <p className="text-xs text-gray-500 truncate">{displayEmail || "0x308c...46db"}</p>
               </div>
               <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            </div>
+             <div className="flex items-center justify-between px-4 py-2">
+              <span className="text-xs text-gray-500">Theme</span>
+              <ThemeToggle />
             </div>
             <button
               type="button"

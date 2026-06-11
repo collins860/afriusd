@@ -28,6 +28,40 @@
   --emerald-glow: rgba(16, 185, 129, 0.15);
 }
 
+/* Light theme */
+.light {
+  --background: #ffffff;
+  --foreground: #0a0a0f;
+  --card: #f4f4f8;
+  --card-foreground: #0a0a0f;
+  --popover: #f4f4f8;
+  --popover-foreground: #0a0a0f;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e8f0;
+  --secondary-foreground: #4a4a60;
+  --muted: #e8e8f0;
+  --muted-foreground: #6b6b80;
+  --accent: #e8e8f0;
+  --accent-foreground: #10b981;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #d8d8e8;
+  --input: #e8e8f0;
+  --ring: #10b981;
+  --emerald-glow: rgba(16, 185, 129, 0.15);
+}
+
+.light body {
+  background-color: #ffffff;
+  color: #0a0a0f;
+}
+
+.light .glass {
+  background: rgba(244, 244, 248, 0.85);
+  border-color: #d8d8e8;
+}
+
 * {
   border-color: var(--border);
   box-sizing: border-box;
