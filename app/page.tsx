@@ -81,10 +81,10 @@ export default function Home() {
                 { label: "Pending", value: "7", color: "text-yellow-400" },
                 { label: "USDC Received", value: "24,850", color: "text-blue-400" },
               ].map((stat) => (
-                <div key={stat.label} className="rounded-xl p-4 border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
-                  <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>{stat.label}</p>
-                  <p className={`text-lg sm:text-xl font-bold ${stat.color}`}>{stat.value}</p>
-                </div>
+                  <div key={stat.label} className="rounded-xl p-4 border flex sm:block items-center justify-between" style={{           backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{stat.label}</p>
+                  <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
+              </div>
               ))}
             </div>
           </div>
