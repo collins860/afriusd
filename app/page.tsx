@@ -58,8 +58,8 @@ export default function Home() {
         </div>
 
         {/* Hero Card Preview */}
-        <div className="max-w-4xl mx-auto mt-20 relative">
-          <div className="glass rounded-2xl p-6">
+            <div className="max-w-4xl mx-auto mt-20 relative px-4 sm:px-0">
+            <div className="glass rounded-2xl p-4 sm:p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Total Revenue</p>
@@ -83,7 +83,7 @@ export default function Home() {
               ].map((stat) => (
                 <div key={stat.label} className="rounded-xl p-4 border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
                   <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>{stat.label}</p>
-                  <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
+                  <p className={`text-lg sm:text-xl font-bold ${stat.color}`}>{stat.value}</p>
                 </div>
               ))}
             </div>
