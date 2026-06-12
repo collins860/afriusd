@@ -8,10 +8,9 @@ export function NavbarAuth() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    // Show nothing while loading to avoid flash of wrong buttons
     return (
       <div className="flex items-center gap-3">
-        <ThemeToggle />
+        <div className="hidden sm:block"><ThemeToggle /></div>
         <div className="w-24 h-9 rounded-lg animate-pulse" style={{ backgroundColor: "var(--bg-input)" }} />
       </div>
     );
@@ -21,7 +20,7 @@ export function NavbarAuth() {
     const label = user.user_metadata?.business_name || (user.email?.split("@")[0] ?? "Account");
     return (
       <div className="flex items-center gap-3">
-        <ThemeToggle />
+        <div className="hidden sm:block"><ThemeToggle /></div>
         <span className="text-sm hidden sm:inline truncate max-w-[140px]" style={{ color: "var(--text-secondary)" }}>
           {label}
         </span>
@@ -36,7 +35,7 @@ export function NavbarAuth() {
 
   return (
     <div className="flex items-center gap-3">
-      <ThemeToggle />
+      <div className="hidden sm:block"><ThemeToggle /></div>
       <Link href="/login">
         <button className="text-sm transition-colors px-4 py-2 hover:text-emerald-400"
           style={{ color: "var(--text-secondary)" }}>
