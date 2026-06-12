@@ -32,7 +32,7 @@ export function ThemeToggle() {
   }
 
   return (
-    <div className="flex items-center gap-1 bg-[#1a1a24] dark:bg-[#1a1a24] light:bg-gray-100 border border-[#1e1e2e] rounded-lg p-1">
+    <div className="flex items-center gap-1 rounded-lg p-1 border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
       {(["light", "dark", "system"] as Theme[]).map((t) => (
         <button
           key={t}
