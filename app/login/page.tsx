@@ -6,20 +6,14 @@ import { useState } from "react";
 import { signIn } from "@/lib/auth/actions";
 import { toast } from "sonner";
 import {
-  AuthBrand,
-  AuthCard,
-  AuthField,
-  AuthLink,
-  AuthPageShell,
-  AuthPasswordField,
-  AuthPrimaryButton,
+  AuthBrand, AuthCard, AuthField, AuthLink,
+  AuthPageShell, AuthPasswordField, AuthPrimaryButton,
 } from "@/components/auth/AuthForm";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/dashboard";
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,38 +36,19 @@ function LoginForm() {
   return (
     <AuthCard>
       <AuthBrand />
-
-      <p className="text-sm text-gray-500 mb-2">
+      <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>
         Don&apos;t have an account?{" "}
         <AuthLink href="/signup">Create account</AuthLink>
       </p>
-
-      <h1 className="text-2xl sm:text-[1.65rem] font-semibold text-white leading-tight mb-8">
+      <h1 className="text-2xl sm:text-[1.65rem] font-semibold leading-tight mb-8">
         Sign in to your AfriUSD dashboard
       </h1>
-
       <form onSubmit={handleSubmit} className="space-y-5">
-        <AuthField
-          id="email"
-          label="Email"
-          type="email"
-          name="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          required
-          autoComplete="email"
-        />
-
-        <AuthPasswordField
-          id="password"
-          label="Password"
-          value={password}
-          onChange={setPassword}
-          placeholder="Password"
-          autoComplete="current-password"
-        />
-
+        <AuthField id="email" label="Email" type="email" name="email"
+          value={email} onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email" required autoComplete="email" />
+        <AuthPasswordField id="password" label="Password" value={password}
+          onChange={setPassword} placeholder="Password" autoComplete="current-password" />
         <AuthPrimaryButton loading={loading}>
           {loading ? "Signing in..." : "Sign in"}
         </AuthPrimaryButton>
@@ -85,11 +60,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <AuthPageShell>
-      <Suspense
-        fallback={
-          <div className="text-center text-sm text-gray-500 py-12">Loading...</div>
-        }
-      >
+      <Suspense fallback={<div className="text-center text-sm py-12" style={{ color: "var(--text-muted)" }}>Loading...</div>}>
         <LoginForm />
       </Suspense>
     </AuthPageShell>
