@@ -3,9 +3,10 @@ import { NavbarAuth } from "@/components/marketing/NavbarAuth";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden">
+    <main className="min-h-screen overflow-hidden" style={{ backgroundColor: "var(--bg-base)", color: "var(--text-primary)" }}>
+
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-[#1e1e2e]">
+      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
@@ -14,9 +15,12 @@ export default function Home() {
             <span className="font-semibold text-lg">AfriUSD</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
-            <a href="#how-it-works" className="text-sm text-gray-400 hover:text-white transition-colors">How it works</a>
-            <a href="#benefits" className="text-sm text-gray-400 hover:text-white transition-colors">Benefits</a>
+            {["features", "how-it-works", "benefits"].map((id) => (
+              <a key={id} href={`#${id}`} className="text-sm transition-colors hover:text-emerald-400 capitalize"
+                style={{ color: "var(--text-secondary)" }}>
+                {id.replace("-", " ")}
+              </a>
+            ))}
           </div>
           <NavbarAuth />
         </div>
@@ -34,7 +38,7 @@ export default function Home() {
             <br />
             <span className="gradient-text">Payments Across Africa</span>
           </h1>
-          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl mb-10 max-w-2xl mx-auto leading-relaxed" style={{ color: "var(--text-secondary)" }}>
             Create invoices in local currency and receive instant USDC settlement on Arc Network. Built for African freelancers, merchants, and businesses.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -44,26 +48,27 @@ export default function Home() {
               </button>
             </Link>
             <Link href="/login">
-              <button className="w-full sm:w-auto border border-[#1e1e2e] hover:border-gray-600 text-gray-300 px-8 py-4 rounded-xl font-semibold text-lg transition-all">
+              <button className="w-full sm:w-auto border px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:border-emerald-500/50"
+                style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
                 View Dashboard →
               </button>
             </Link>
           </div>
-          <p className="text-gray-600 text-sm mt-6">No bank account required · Instant settlement · Zero borders</p>
+          <p className="text-sm mt-6" style={{ color: "var(--text-muted)" }}>No bank account required · Instant settlement · Zero borders</p>
         </div>
 
         {/* Hero Card Preview */}
         <div className="max-w-4xl mx-auto mt-20 relative">
-          <div className="glass rounded-2xl p-6 border border-[#1e1e2e]">
+          <div className="glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <p className="text-gray-400 text-sm">Total Revenue</p>
-                <p className="text-3xl font-bold text-white mt-1">$24,850.00</p>
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Total Revenue</p>
+                <p className="text-3xl font-bold mt-1">$24,850.00</p>
                 <p className="text-emerald-400 text-sm mt-1">+12.5% this month</p>
               </div>
               <div className="text-right">
-                <p className="text-gray-400 text-sm">Network</p>
-                <p className="text-white font-semibold mt-1">Arc Testnet</p>
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Network</p>
+                <p className="font-semibold mt-1">Arc Testnet</p>
                 <div className="flex items-center gap-1 justify-end mt-1">
                   <div className="w-2 h-2 rounded-full bg-emerald-400" />
                   <span className="text-emerald-400 text-sm">Connected</span>
@@ -76,8 +81,8 @@ export default function Home() {
                 { label: "Pending", value: "7", color: "text-yellow-400" },
                 { label: "USDC Received", value: "24,850", color: "text-blue-400" },
               ].map((stat) => (
-                <div key={stat.label} className="bg-[#0a0a0f] rounded-xl p-4 border border-[#1e1e2e]">
-                  <p className="text-gray-500 text-xs mb-1">{stat.label}</p>
+                <div key={stat.label} className="rounded-xl p-4 border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
+                  <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>{stat.label}</p>
                   <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
                 </div>
               ))}
@@ -91,45 +96,21 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Everything you need to get paid</h2>
-            <p className="text-gray-400 text-lg max-w-xl mx-auto">A complete invoicing and payment platform built for the African market</p>
+            <p className="text-lg max-w-xl mx-auto" style={{ color: "var(--text-secondary)" }}>A complete invoicing and payment platform built for the African market</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              {
-                icon: "📄",
-                title: "Smart Invoicing",
-                desc: "Create professional invoices in NGN, KES, GHS, ZAR or USD. Automatic USDC conversion at live rates.",
-              },
-              {
-                icon: "⚡",
-                title: "Instant Settlement",
-                desc: "Receive USDC payments directly to your wallet on Arc Network. No delays, no intermediaries.",
-              },
-              {
-                icon: "🌍",
-                title: "Global Reach",
-                desc: "Share invoice links or QR codes with customers anywhere in the world. They pay with USDC.",
-              },
-              {
-                icon: "🔐",
-                title: "Wallet Native",
-                desc: "Connect MetaMask or any WalletConnect-compatible wallet. Your keys, your money.",
-              },
-              {
-                icon: "📊",
-                title: "Payment Dashboard",
-                desc: "Track all your invoices, payments, and revenue in one clean dashboard.",
-              },
-              {
-                icon: "📱",
-                title: "QR Code Payments",
-                desc: "Every invoice gets a QR code. Perfect for in-person payments across Africa.",
-              },
+              { icon: "📄", title: "Smart Invoicing", desc: "Create professional invoices in NGN, KES, GHS, ZAR or USD. Automatic USDC conversion at live rates." },
+              { icon: "⚡", title: "Instant Settlement", desc: "Receive USDC payments directly to your wallet on Arc Network. No delays, no intermediaries." },
+              { icon: "🌍", title: "Global Reach", desc: "Share invoice links or QR codes with customers anywhere in the world. They pay with USDC." },
+              { icon: "🔐", title: "Wallet Native", desc: "Connect MetaMask or any WalletConnect-compatible wallet. Your keys, your money." },
+              { icon: "📊", title: "Payment Dashboard", desc: "Track all your invoices, payments, and revenue in one clean dashboard." },
+              { icon: "📱", title: "QR Code Payments", desc: "Every invoice gets a QR code. Perfect for in-person payments across Africa." },
             ].map((feature) => (
-              <div key={feature.title} className="glass rounded-xl p-6 border border-[#1e1e2e] hover:border-emerald-500/30 transition-all group">
+              <div key={feature.title} className="glass rounded-xl p-6 hover:border-emerald-500/30 transition-all group">
                 <div className="text-3xl mb-4">{feature.icon}</div>
                 <h3 className="text-lg font-semibold mb-2 group-hover:text-emerald-400 transition-colors">{feature.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -137,11 +118,11 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-24 px-6 bg-[#0d0d15]">
+      <section id="how-it-works" className="py-24 px-6" style={{ backgroundColor: "var(--bg-card)" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">How it works</h2>
-            <p className="text-gray-400 text-lg">Get paid in 4 simple steps</p>
+            <p className="text-lg" style={{ color: "var(--text-secondary)" }}>Get paid in 4 simple steps</p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             {[
@@ -150,11 +131,11 @@ export default function Home() {
               { step: "03", title: "Share with customer", desc: "Send the invoice link or QR code to your customer anywhere in the world." },
               { step: "04", title: "Get paid in USDC", desc: "Customer pays with USDC on Arc Network. Funds arrive in your wallet instantly." },
             ].map((item) => (
-              <div key={item.step} className="flex gap-6 p-6 glass rounded-xl border border-[#1e1e2e]">
+              <div key={item.step} className="flex gap-6 p-6 glass rounded-xl">
                 <div className="text-4xl font-bold text-emerald-500/30 font-mono">{item.step}</div>
                 <div>
                   <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -167,7 +148,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Built for African businesses</h2>
-            <p className="text-gray-400 text-lg max-w-xl mx-auto">Whether you're a freelancer in Lagos, a merchant in Nairobi, or a creator in Accra</p>
+            <p className="text-lg max-w-xl mx-auto" style={{ color: "var(--text-secondary)" }}>Whether you're a freelancer in Lagos, a merchant in Nairobi, or a creator in Accra</p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {[
@@ -176,13 +157,13 @@ export default function Home() {
               { title: "Stable value payments", desc: "USDC doesn't fluctuate like crypto. 1 USDC = 1 USD, always." },
               { title: "Low transaction fees", desc: "Arc Network is built for fast, cheap transactions. Keep more of your money." },
             ].map((benefit) => (
-              <div key={benefit.title} className="flex gap-4 p-6 glass rounded-xl border border-[#1e1e2e]">
+              <div key={benefit.title} className="flex gap-4 p-6 glass rounded-xl">
                 <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <div className="w-2 h-2 rounded-full bg-emerald-400" />
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">{benefit.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{benefit.desc}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{benefit.desc}</p>
                 </div>
               </div>
             ))}
@@ -193,11 +174,11 @@ export default function Home() {
       {/* CTA */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="glass rounded-2xl p-12 border border-[#1e1e2e] relative overflow-hidden">
+          <div className="glass rounded-2xl p-12 relative overflow-hidden">
             <div className="absolute inset-0 bg-emerald-500/5" />
             <div className="relative z-10">
               <h2 className="text-4xl font-bold mb-4">Ready to get paid?</h2>
-              <p className="text-gray-400 text-lg mb-8">Join African merchants already using AfriUSD to accept global payments.</p>
+              <p className="text-lg mb-8" style={{ color: "var(--text-secondary)" }}>Join African merchants already using AfriUSD to accept global payments.</p>
               <Link href="/signup">
                 <button className="bg-emerald-500 hover:bg-emerald-400 text-white px-10 py-4 rounded-xl font-semibold text-lg transition-all glow-emerald">
                   Launch App →
@@ -209,7 +190,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#1e1e2e] py-12 px-6">
+      <footer className="border-t py-12 px-6" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-emerald-500 flex items-center justify-center">
@@ -217,8 +198,8 @@ export default function Home() {
             </div>
             <span className="font-semibold">AfriUSD</span>
           </div>
-          <p className="text-gray-500 text-sm">Built on Arc Network · Powered by Circle USDC</p>
-          <p className="text-gray-600 text-sm">© 2025 AfriUSD. All rights reserved.</p>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>Built on Arc Network · Powered by Circle USDC</p>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>© 2025 AfriUSD. All rights reserved.</p>
         </div>
       </footer>
     </main>
