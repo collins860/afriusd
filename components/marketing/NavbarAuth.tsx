@@ -18,7 +18,7 @@ export function NavbarAuth() {
   }
 
   if (user) {
-    const label = user.user_metadata?.business_name || user.email?.split("@")[0] ?? "Account";
+    const label = user.user_metadata?.business_name || (user.email?.split("@")[0] ?? "Account");
     return (
       <div className="flex items-center gap-3">
         <ThemeToggle />
