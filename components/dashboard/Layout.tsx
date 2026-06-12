@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="font-semibold text-sm">AfriUSD</span>
           </Link>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="hidden">
           <ThemeToggle />
           <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1.5"
             style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
