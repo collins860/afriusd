@@ -75,7 +75,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 { label: "Paid Invoices", value: "48", color: "text-emerald-400" },
                 { label: "Pending", value: "7", color: "text-yellow-400" },
