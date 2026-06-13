@@ -6,6 +6,7 @@ import {
   RainbowKitProvider,
   connectorsForWallets,
   darkTheme,
+  Wallet,
 } from "@rainbow-me/rainbowkit";
 import {
   metaMaskWallet,
@@ -31,6 +32,51 @@ import "@rainbow-me/rainbowkit/styles.css";
 const projectId =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
   "1c78f2b6187f738cd6a7db007432b41d";
+
+const appUrl = "https://afriusd.vercel.app";
+
+// Custom wallet with mobile deep link
+function createMobileWallet({
+  id,
+  name,
+  iconUrl,
+  iconBackground,
+  deepLink,
+  universalLink,
+}: {
+  id: string;
+  name: string;
+  iconUrl: string;
+  iconBackground: string;
+  deepLink: string;
+  universalLink?: string;
+}): Wallet {
+  return {
+    id,
+    name,
+    iconUrl,
+    iconBackground,
+    downloadUrls: {},
+    mobile: {
+      getUri: (uri: string) => {
+        const encoded = encodeURIComponent(uri);
+        return deepLink.replace("{uri}", encoded);
+      },
+    },
+    qrCode: {
+      getUri: (uri: string) => uri,
+    },
+    ...(universalLink && {
+      desktop: {
+        getUri: (uri: string) => {
+          const encoded = encodeURIComponent(uri);
+          return `${universalLink}?uri=${encoded}`;
+        },
+      },
+    }),
+    createConnector: metaMaskWallet.createConnector,
+  };
+}
 
 const connectors = connectorsForWallets(
   [
@@ -64,7 +110,7 @@ const connectors = connectorsForWallets(
   {
     appName: "AfriUSD",
     projectId,
-    appUrl: "https://afriusd.vercel.app",
+    appUrl,
   }
 );
 
