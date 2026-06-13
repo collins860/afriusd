@@ -115,7 +115,6 @@ function WalletModal({
         style={{ backgroundColor: "var(--bg-card)", color: "var(--text-primary)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold">Connect a Wallet</h2>
           <button
@@ -127,33 +126,46 @@ function WalletModal({
           </button>
         </div>
 
-        {/* Wallet List */}
         <div className="space-y-2 max-h-[60vh] overflow-y-auto">
           {mobile ? (
-            <>
-              <p className="text-xs mb-3 text-center" style={{ color: "var(--text-muted)" }}>
-                Tap a wallet to open it and connect
-              </p>
-              {wallets.map((wallet) => (
-                <a
-                  key={wallet.name}
-                  href={wallet.getDeepLink(currentUrl)}
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 w-full py-3 px-4 rounded-xl transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "var(--bg-input)" }}
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                    style={{ backgroundColor: wallet.color + "20" }}
-                  >
-                    {wallet.icon}
-                  </div>
-                  <span className="font-medium text-sm">{wallet.name}</span>
-                  <span className="ml-auto text-xs" style={{ color: "var(--text-muted)" }}>Open →</span>
-                </a>
-              ))}
-            </>
-          ) : (
+  <>
+    <p
+      className="text-xs mb-3 text-center"
+      style={{ color: "var(--text-muted)" }}
+    >
+      Tap a wallet to open it and connect
+    </p>
+
+    {wallets.map((wallet) => (
+      <a
+        key={wallet.name}
+        href={wallet.getDeepLink(currentUrl)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 w-full py-3 px-4 rounded-xl transition-opacity hover:opacity-80"
+        style={{ backgroundColor: "var(--bg-input)" }}
+      >
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+          style={{ backgroundColor: wallet.color + "20" }}
+        >
+          {wallet.icon}
+        </div>
+
+        <span className="font-medium text-sm">
+          {wallet.name}
+        </span>
+
+        <span
+          className="ml-auto text-xs"
+          style={{ color: "var(--text-muted)" }}
+        >
+          Open →
+        </span>
+      </a>
+    ))}
+  </>
+) : (
             <>
               <p className="text-xs mb-3 text-center" style={{ color: "var(--text-muted)" }}>
                 Choose your wallet to connect
@@ -178,12 +190,11 @@ function WalletModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="mt-4 pt-4 border-t text-center" style={{ borderColor: "var(--border)" }}>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Don't have a wallet?{" "}
-            <a
-              href="https://metamask.io/download/"
+            Don&apos;t have a wallet?{" "}
+            
+            <a href="https://metamask.io/download/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-emerald-400 hover:underline"
@@ -209,7 +220,8 @@ export default function InvoicePage() {
 
   const { address, isConnected, chainId } = useAccount();
   const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess, error: confirmError } = useWaitForTransactionReceipt({ hash: txHash, chainId: arcTestnet.id });
+  const { isLoading: isConfirming, isSuccess, error: confirmError } =
+    useWaitForTransactionReceipt({ hash: txHash, chainId: arcTestnet.id });
   const onArcNetwork = !isConnected || chainId === arcTestnet.id;
 
   useEffect(() => {
@@ -218,8 +230,14 @@ export default function InvoicePage() {
 
   useEffect(() => {
     async function loadInvoice() {
-      try { const data = await fetchInvoiceById(supabase, invoiceId); setInvoice(data); }
-      catch { setInvoice(null); } finally { setLoading(false); }
+      try {
+        const data = await fetchInvoiceById(supabase, invoiceId);
+        setInvoice(data);
+      } catch {
+        setInvoice(null);
+      } finally {
+        setLoading(false);
+      }
     }
     loadInvoice();
   }, [invoiceId]);
@@ -230,16 +248,21 @@ export default function InvoicePage() {
         setPaymentProcessed(true);
         toast.loading("Verifying payment...");
         const response = await fetch("/api/verify-payment", {
-          method: "POST", headers: { "Content-Type": "application/json" },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ txHash, invoiceId: invoice.id }),
         });
         const result = await response.json();
         if (response.ok && result.success) {
-          toast.dismiss(); toast.success("Payment confirmed!");
-          setInvoice((prev) => prev ? { ...prev, status: "paid", payment_tx_hash: txHash } : prev);
+          toast.dismiss();
+          toast.success("Payment confirmed!");
+          setInvoice((prev) =>
+            prev ? { ...prev, status: "paid", payment_tx_hash: txHash } : prev
+          );
           setStep("success");
         } else {
-          toast.dismiss(); toast.error(result.error || "Payment sent but invoice update failed.");
+          toast.dismiss();
+          toast.error(result.error || "Payment sent but invoice update failed.");
           setStep("view");
         }
       }
@@ -247,8 +270,19 @@ export default function InvoicePage() {
     markPaid();
   }, [isSuccess, txHash, invoice, paymentProcessed]);
 
-  useEffect(() => { if (writeError) { toast.error(getWalletErrorMessage(writeError)); setStep("view"); } }, [writeError]);
-  useEffect(() => { if (confirmError) { toast.error(getWalletErrorMessage(confirmError)); setStep("view"); } }, [confirmError]);
+  useEffect(() => {
+    if (writeError) {
+      toast.error(getWalletErrorMessage(writeError));
+      setStep("view");
+    }
+  }, [writeError]);
+
+  useEffect(() => {
+    if (confirmError) {
+      toast.error(getWalletErrorMessage(confirmError));
+      setStep("view");
+    }
+  }, [confirmError]);
 
   const handlePay = async () => {
     if (!isConnected) { toast.error("Please connect your wallet first"); return; }
@@ -256,8 +290,14 @@ export default function InvoicePage() {
     if (!invoice) return;
     setStep("paying");
     writeContract({
-      chainId: arcTestnet.id, address: USDC_CONTRACT_ADDRESS, abi: USDC_ABI, functionName: "transfer",
-      args: [invoice.merchant_id as `0x${string}`, parseUnits(invoice.usdc_amount.toString(), USDC_DECIMALS)],
+      chainId: arcTestnet.id,
+      address: USDC_CONTRACT_ADDRESS,
+      abi: USDC_ABI,
+      functionName: "transfer",
+      args: [
+        invoice.merchant_id as `0x${string}`,
+        parseUnits(invoice.usdc_amount.toString(), USDC_DECIMALS),
+      ],
     });
   };
 
@@ -271,8 +311,12 @@ export default function InvoicePage() {
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--bg-base)", color: "var(--text-primary)" }}>
       <div className="text-center">
         <p className="text-2xl font-bold mb-2">Invoice not found</p>
-        <p className="mb-6" style={{ color: "var(--text-secondary)" }}>The invoice {invoiceId} does not exist.</p>
-        <Link href="/"><button className="bg-emerald-500 text-white px-6 py-3 rounded-xl">Go Home</button></Link>
+        <p className="mb-6" style={{ color: "var(--text-secondary)" }}>
+          The invoice {invoiceId} does not exist.
+        </p>
+        <Link href="/">
+          <button className="bg-emerald-500 text-white px-6 py-3 rounded-xl">Go Home</button>
+        </Link>
       </div>
     </div>
   );
@@ -286,7 +330,9 @@ export default function InvoicePage() {
           </div>
         </div>
         <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
-        <p className="mb-8" style={{ color: "var(--text-secondary)" }}>Your payment has been confirmed on Arc Network.</p>
+        <p className="mb-8" style={{ color: "var(--text-secondary)" }}>
+          Your payment has been confirmed on Arc Network.
+        </p>
         <div className="glass rounded-xl p-6 mb-6 text-left space-y-3">
           {[
             { label: "Invoice", value: invoice.id },
@@ -295,17 +341,26 @@ export default function InvoicePage() {
           ].map((row) => (
             <div key={row.label} className="flex justify-between">
               <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{row.label}</span>
-              <span className={`text-sm font-medium ${row.green ? "text-emerald-400" : ""}`}>{row.value}</span>
+              <span className={`text-sm font-medium ${row.green ? "text-emerald-400" : ""}`}>
+                {row.value}
+              </span>
             </div>
           ))}
           <div className="border-t pt-3" style={{ borderColor: "var(--border)" }}>
             <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>Transaction Hash</p>
-            <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
-              className="text-emerald-400 text-xs font-mono truncate block hover:underline">{txHash}</a>
+            
+              <a href={`https://testnet.arcscan.app/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-400 text-xs font-mono truncate block hover:underline">
+                {txHash}
+            </a>
           </div>
         </div>
         <Link href="/dashboard">
-          <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">Go to Dashboard</button>
+          <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
+            Go to Dashboard
+          </button>
         </Link>
       </div>
     </div>
@@ -314,7 +369,6 @@ export default function InvoicePage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--bg-base)", color: "var(--text-primary)" }}>
 
-      {/* Custom Wallet Modal */}
       {showWalletModal && (
         <WalletModal
           onClose={() => setShowWalletModal(false)}
@@ -323,23 +377,43 @@ export default function InvoicePage() {
         />
       )}
 
-      <header className="border-b px-6 py-4 flex items-center justify-between" style={{ borderColor: "var(--border)", backgroundColor: "var(--header-bg)" }}>
+      <header
+        className="border-b px-6 py-4 flex items-center justify-between"
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--header-bg)" }}
+      >
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center">
             <span className="text-white font-bold text-xs">A</span>
           </div>
           <span className="font-semibold">AfriUSD</span>
         </div>
-        <ConnectButton chainStatus="icon" showBalance={false} />
+        {isConnected ? (
+          <ConnectButton chainStatus="icon" showBalance={false} />
+        ) : (
+          <button
+            onClick={() => setShowWalletModal(true)}
+            className="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors"
+          >
+            Connect Wallet
+          </button>
+        )}
       </header>
 
       <div className="max-w-2xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold">Invoice Payment</h1>
-            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>{invoice.id} · Due {invoice.due_date}</p>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
+              {invoice.id} · Due {invoice.due_date}
+            </p>
           </div>
-          <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${invoice.status === "paid" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"}`}>
+          <span
+            className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+              invoice.status === "paid"
+                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+            }`}
+          >
             {invoice.status === "paid" ? "Paid" : "Awaiting Payment"}
           </span>
         </div>
@@ -351,7 +425,9 @@ export default function InvoicePage() {
             </div>
             <div>
               <p className="font-semibold">Merchant</p>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{invoice.merchant_id.slice(0, 10)}...{invoice.merchant_id.slice(-6)}</p>
+              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                {invoice.merchant_id.slice(0, 10)}...{invoice.merchant_id.slice(-6)}
+              </p>
             </div>
           </div>
           <div className="p-6 space-y-4">
@@ -366,8 +442,12 @@ export default function InvoicePage() {
             </div>
             <div className="border-t pt-4" style={{ borderColor: "var(--border)" }}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Amount ({invoice.currency})</span>
-                <span className="font-medium">{Number(invoice.amount).toLocaleString()} {invoice.currency}</span>
+                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  Amount ({invoice.currency})
+                </span>
+                <span className="font-medium">
+                  {Number(invoice.amount).toLocaleString()} {invoice.currency}
+                </span>
               </div>
               <div className="flex justify-between items-center bg-emerald-500/5 border border-emerald-500/10 rounded-xl px-4 py-3">
                 <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Pay with USDC</span>
@@ -381,18 +461,26 @@ export default function InvoicePage() {
           <div className="glass rounded-xl border border-emerald-500/20 p-6 text-center">
             <p className="text-emerald-400 font-semibold text-lg mb-2">✓ This invoice has been paid</p>
             {invoice.payment_tx_hash && (
-              <a href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`} target="_blank" rel="noopener noreferrer"
-                className="text-xs hover:text-emerald-400 transition-colors" style={{ color: "var(--text-muted)" }}>
-                View transaction on ArcScan →
+              
+              <a href={`https://testnet.arcscan.app/tx/${invoice.payment_tx_hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs hover:text-emerald-400 transition-colors"
+                  style={{ color: "var(--text-muted)" }} >
+                  View transaction on ArcScan →
               </a>
             )}
             <Link href="/dashboard">
-              <button className="w-full mt-4 bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">Go to Dashboard</button>
+              <button className="w-full mt-4 bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
+                Go to Dashboard
+              </button>
             </Link>
           </div>
         ) : !isConnected ? (
           <div className="text-center space-y-4">
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Connect your wallet to pay this invoice</p>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              Connect your wallet to pay this invoice
+            </p>
             <button
               onClick={() => setShowWalletModal(true)}
               className="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
@@ -423,9 +511,16 @@ export default function InvoicePage() {
                   <span className={row.green ? "text-emerald-400 font-bold" : ""}>{row.value}</span>
                 </div>
               ))}
-              <button onClick={handlePay} disabled={isPending || isConfirming || !onArcNetwork}
-                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold transition-colors">
-                {isPending ? "Confirm in wallet..." : isConfirming ? "Confirming on Arc..." : `Pay ${invoice.usdc_amount} USDC`}
+              <button
+                onClick={handlePay}
+                disabled={isPending || isConfirming || !onArcNetwork}
+                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-semibold transition-colors"
+              >
+                {isPending
+                  ? "Confirm in wallet..."
+                  : isConfirming
+                  ? "Confirming on Arc..."
+                  : `Pay ${invoice.usdc_amount} USDC`}
               </button>
             </div>
           </div>
