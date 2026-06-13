@@ -14,62 +14,6 @@ import { fetchInvoiceById } from "@/lib/invoices/db";
 import type { Invoice } from "@/lib/invoices/types";
 import { toast } from "sonner";
 
-function isMobile() {
-  if (typeof window === "undefined") return false;
-  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-}
-
-function MobileWalletButtons({ currentUrl }: { currentUrl: string }) {
-  const encodedUrl = encodeURIComponent(currentUrl);
-
-  const wallets = [
-    {
-      name: "MetaMask",
-      icon: "🦊",
-      deepLink: `https://metamask.app.link/dapp/${currentUrl.replace("https://", "")}`,
-      color: "bg-orange-500",
-    },
-    {
-      name: "OKX Wallet",
-      icon: "⬛",
-      deepLink: `okx://wallet/dapp/url?dappUrl=${encodedUrl}`,
-      color: "bg-gray-800",
-    },
-    {
-      name: "Trust Wallet",
-      icon: "🛡️",
-      deepLink: `trust://open_url?coin_id=60&url=${encodedUrl}`,
-      color: "bg-blue-500",
-    },
-  ];
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm font-medium text-center mb-4" style={{ color: "var(--text-secondary)" }}>
-        Open in your wallet app to pay
-      </p>
-      {wallets.map((wallet) => (
-        <a key={wallet.name} href={wallet.deepLink}
-          className={`flex items-center gap-3 w-full ${wallet.color} text-white py-3 px-4 rounded-xl font-medium transition-opacity hover:opacity-90`}>
-          <span className="text-xl">{wallet.icon}</span>
-          <span>Open in {wallet.name}</span>
-        </a>
-      ))}
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t" style={{ borderColor: "var(--border)" }} />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="px-2" style={{ backgroundColor: "var(--bg-base)", color: "var(--text-muted)" }}>or</span>
-        </div>
-      </div>
-      <div className="flex justify-center">
-        <ConnectButton chainStatus="full" />
-      </div>
-    </div>
-  );
-}
-
 export default function InvoicePage() {
   const params = useParams();
   const invoiceId = params.id as string;
@@ -77,18 +21,11 @@ export default function InvoicePage() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"view" | "paying" | "success">("view");
   const [paymentProcessed, setPaymentProcessed] = useState(false);
-  const [mobile, setMobile] = useState(false);
-  const [currentUrl, setCurrentUrl] = useState("");
 
   const { address, isConnected, chainId } = useAccount();
   const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, error: confirmError } = useWaitForTransactionReceipt({ hash: txHash, chainId: arcTestnet.id });
   const onArcNetwork = !isConnected || chainId === arcTestnet.id;
-
-  useEffect(() => {
-    setMobile(isMobile());
-    setCurrentUrl(window.location.href);
-  }, []);
 
   useEffect(() => {
     async function loadInvoice() {
@@ -253,19 +190,11 @@ export default function InvoicePage() {
             </Link>
           </div>
         ) : !isConnected ? (
-          <div className="glass rounded-xl border border-emerald-500/20 p-6">
-            {mobile ? (
-              <MobileWalletButtons currentUrl={currentUrl} />
-            ) : (
-              <div className="text-center space-y-4">
-                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Connect your wallet to pay this invoice</p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  You need Arc Testnet USDC from{" "}
-                  <a href="https://faucet.circle.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">faucet.circle.com</a>
-                </p>
-                <div className="flex justify-center"><ConnectButton chainStatus="full" /></div>
-              </div>
-            )}
+          <div className="text-center space-y-4">
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Connect your wallet to pay this invoice</p>
+            <div className="flex justify-center">
+              <ConnectButton chainStatus="full" />
+            </div>
           </div>
         ) : (
           <div className="glass rounded-xl border border-emerald-500/20 p-6 space-y-4">
