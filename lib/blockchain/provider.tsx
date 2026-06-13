@@ -54,6 +54,7 @@ const connectors = connectorsForWallets(
   {
     appName: "AfriUSD",
     projectId,
+    appUrl: "https://afriusd.vercel.app",
   }
 );
 
@@ -73,8 +74,9 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
-          initialChain={arcTestnet}
-          theme={darkTheme({
+  initialChain={arcTestnet}
+  modalSize="compact"
+  theme={darkTheme({
             accentColor: "#10b981",
             accentColorForeground: "white",
             borderRadius: "large",
