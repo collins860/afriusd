@@ -19,6 +19,11 @@ import {
   bybitWallet,
   bitgetWallet,
   uniswapWallet,
+  safeWallet,
+  rabbyWallet,
+  braveWallet,
+  imTokenWallet,
+  oneInchWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { arcTestnet } from "./config";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -47,6 +52,11 @@ const connectors = connectorsForWallets(
         phantomWallet,
         zerionWallet,
         uniswapWallet,
+        rabbyWallet,
+        braveWallet,
+        imTokenWallet,
+        oneInchWallet,
+        safeWallet,
         walletConnectWallet,
       ],
     },
@@ -74,9 +84,9 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
-  initialChain={arcTestnet}
-  modalSize="compact"
-  theme={darkTheme({
+          initialChain={arcTestnet}
+          modalSize="compact"
+          theme={darkTheme({
             accentColor: "#10b981",
             accentColorForeground: "white",
             borderRadius: "large",
