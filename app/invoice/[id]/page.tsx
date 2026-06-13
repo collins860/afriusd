@@ -135,11 +135,12 @@ function WalletModal({
                 Tap a wallet to open it and connect
               </p>
               {wallets.map((wallet) => (
-                
+                <a
                   key={wallet.name}
                   href={wallet.getDeepLink(currentUrl)}
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 w-full py-3 px-4 rounded-xl transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}
+                  style={{ backgroundColor: "var(--bg-input)" }}
                 >
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
@@ -181,7 +182,7 @@ function WalletModal({
         <div className="mt-4 pt-4 border-t text-center" style={{ borderColor: "var(--border)" }}>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             Don't have a wallet?{" "}
-            
+            <a
               href="https://metamask.io/download/"
               target="_blank"
               rel="noopener noreferrer"
