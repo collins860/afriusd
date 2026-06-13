@@ -14,6 +14,188 @@ import { fetchInvoiceById } from "@/lib/invoices/db";
 import type { Invoice } from "@/lib/invoices/types";
 import { toast } from "sonner";
 
+function isMobile() {
+  if (typeof window === "undefined") return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
+const wallets = [
+  {
+    name: "MetaMask",
+    icon: "🦊",
+    color: "#E8831D",
+    getDeepLink: (url: string) =>
+      `https://metamask.app.link/dapp/${url.replace("https://", "")}`,
+  },
+  {
+    name: "OKX Wallet",
+    icon: "⬛",
+    color: "#000000",
+    getDeepLink: (url: string) =>
+      `okx://wallet/dapp/url?dappUrl=${encodeURIComponent(url)}`,
+  },
+  {
+    name: "Trust Wallet",
+    icon: "🛡️",
+    color: "#3375BB",
+    getDeepLink: (url: string) =>
+      `trust://open_url?coin_id=60&url=${encodeURIComponent(url)}`,
+  },
+  {
+    name: "Coinbase Wallet",
+    icon: "🔵",
+    color: "#0052FF",
+    getDeepLink: (url: string) =>
+      `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(url)}`,
+  },
+  {
+    name: "Bybit Wallet",
+    icon: "🟡",
+    color: "#F7A600",
+    getDeepLink: (url: string) =>
+      `bybit://wallet/dapp?url=${encodeURIComponent(url)}`,
+  },
+  {
+    name: "Bitget Wallet",
+    icon: "💙",
+    color: "#1DA2B4",
+    getDeepLink: (url: string) =>
+      `bitkeep://dapp?url=${encodeURIComponent(url)}`,
+  },
+  {
+    name: "Rainbow",
+    icon: "🌈",
+    color: "#032463",
+    getDeepLink: (url: string) =>
+      `rainbow://dapp?url=${encodeURIComponent(url)}`,
+  },
+  {
+    name: "Zerion",
+    icon: "💎",
+    color: "#4C82FB",
+    getDeepLink: (url: string) =>
+      `zerion://dapp?url=${encodeURIComponent(url)}`,
+  },
+  {
+    name: "imToken",
+    icon: "💠",
+    color: "#11C4D1",
+    getDeepLink: (url: string) =>
+      `imtokenv2://navigate/DAppBrowser?url=${encodeURIComponent(url)}`,
+  },
+  {
+    name: "TokenPocket",
+    icon: "🟢",
+    color: "#2980FE",
+    getDeepLink: (url: string) =>
+      `tpoutside://pull.activity?param=${encodeURIComponent(
+        JSON.stringify({ url })
+      )}`,
+  },
+];
+
+function WalletModal({
+  onClose,
+  currentUrl,
+  onDesktopConnect,
+}: {
+  onClose: () => void;
+  currentUrl: string;
+  onDesktopConnect: () => void;
+}) {
+  const mobile = isMobile();
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+        style={{ backgroundColor: "var(--bg-card)", color: "var(--text-primary)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold">Connect a Wallet</h2>
+          <button
+            onClick={onClose}
+            className="text-xl hover:opacity-70"
+            style={{ color: "var(--text-muted)" }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Wallet List */}
+        <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+          {mobile ? (
+            <>
+              <p className="text-xs mb-3 text-center" style={{ color: "var(--text-muted)" }}>
+                Tap a wallet to open it and connect
+              </p>
+              {wallets.map((wallet) => (
+                
+                  key={wallet.name}
+                  href={wallet.getDeepLink(currentUrl)}
+                  className="flex items-center gap-3 w-full py-3 px-4 rounded-xl transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                    style={{ backgroundColor: wallet.color + "20" }}
+                  >
+                    {wallet.icon}
+                  </div>
+                  <span className="font-medium text-sm">{wallet.name}</span>
+                  <span className="ml-auto text-xs" style={{ color: "var(--text-muted)" }}>Open →</span>
+                </a>
+              ))}
+            </>
+          ) : (
+            <>
+              <p className="text-xs mb-3 text-center" style={{ color: "var(--text-muted)" }}>
+                Choose your wallet to connect
+              </p>
+              {wallets.map((wallet) => (
+                <button
+                  key={wallet.name}
+                  onClick={onDesktopConnect}
+                  className="flex items-center gap-3 w-full py-3 px-4 rounded-xl transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "var(--bg-input)" }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                    style={{ backgroundColor: wallet.color + "20" }}
+                  >
+                    {wallet.icon}
+                  </div>
+                  <span className="font-medium text-sm">{wallet.name}</span>
+                </button>
+              ))}
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-4 pt-4 border-t text-center" style={{ borderColor: "var(--border)" }}>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Don't have a wallet?{" "}
+            
+              href="https://metamask.io/download/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-400 hover:underline"
+            >
+              Get one here
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function InvoicePage() {
   const params = useParams();
   const invoiceId = params.id as string;
@@ -21,11 +203,17 @@ export default function InvoicePage() {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<"view" | "paying" | "success">("view");
   const [paymentProcessed, setPaymentProcessed] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState("");
 
   const { address, isConnected, chainId } = useAccount();
   const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, error: confirmError } = useWaitForTransactionReceipt({ hash: txHash, chainId: arcTestnet.id });
   const onArcNetwork = !isConnected || chainId === arcTestnet.id;
+
+  useEffect(() => {
+    setCurrentUrl(window.location.href);
+  }, []);
 
   useEffect(() => {
     async function loadInvoice() {
@@ -66,8 +254,10 @@ export default function InvoicePage() {
     if (!onArcNetwork) { toast.error("Switch to Arc Testnet first"); return; }
     if (!invoice) return;
     setStep("paying");
-    writeContract({ chainId: arcTestnet.id, address: USDC_CONTRACT_ADDRESS, abi: USDC_ABI, functionName: "transfer",
-      args: [invoice.merchant_id as `0x${string}`, parseUnits(invoice.usdc_amount.toString(), USDC_DECIMALS)] });
+    writeContract({
+      chainId: arcTestnet.id, address: USDC_CONTRACT_ADDRESS, abi: USDC_ABI, functionName: "transfer",
+      args: [invoice.merchant_id as `0x${string}`, parseUnits(invoice.usdc_amount.toString(), USDC_DECIMALS)],
+    });
   };
 
   if (loading) return (
@@ -122,6 +312,16 @@ export default function InvoicePage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--bg-base)", color: "var(--text-primary)" }}>
+
+      {/* Custom Wallet Modal */}
+      {showWalletModal && (
+        <WalletModal
+          onClose={() => setShowWalletModal(false)}
+          currentUrl={currentUrl}
+          onDesktopConnect={() => setShowWalletModal(false)}
+        />
+      )}
+
       <header className="border-b px-6 py-4 flex items-center justify-between" style={{ borderColor: "var(--border)", backgroundColor: "var(--header-bg)" }}>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center">
@@ -192,9 +392,12 @@ export default function InvoicePage() {
         ) : !isConnected ? (
           <div className="text-center space-y-4">
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Connect your wallet to pay this invoice</p>
-            <div className="flex justify-center">
-              <ConnectButton chainStatus="full" />
-            </div>
+            <button
+              onClick={() => setShowWalletModal(true)}
+              className="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
+            >
+              Connect Wallet
+            </button>
           </div>
         ) : (
           <div className="glass rounded-xl border border-emerald-500/20 p-6 space-y-4">
