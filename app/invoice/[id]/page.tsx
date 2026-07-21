@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { parseUnits } from "viem";
 import { arcTestnet, USDC_CONTRACT_ADDRESS, USDC_ABI, USDC_DECIMALS } from "@/lib/blockchain/config";
 import { getWalletErrorMessage } from "@/lib/blockchain/errors";
@@ -219,6 +219,7 @@ export default function InvoicePage() {
   const [currentUrl, setCurrentUrl] = useState("");
 
   const { address, isConnected, chainId } = useAccount();
+  const { openConnectModal } = useConnectModal();
   const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, error: confirmError } =
     useWaitForTransactionReceipt({ hash: txHash, chainId: arcTestnet.id });
@@ -391,7 +392,13 @@ export default function InvoicePage() {
           <ConnectButton chainStatus="icon" showBalance={false} />
         ) : (
           <button
-            onClick={() => setShowWalletModal(true)}
+            onClick={() => {
+              if (isMobile()) {
+                setShowWalletModal(true);
+              } else {
+                openConnectModal?.();
+              }
+            }}
             className="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-colors"
           >
             Connect Wallet
@@ -482,7 +489,13 @@ export default function InvoicePage() {
               Connect your wallet to pay this invoice
             </p>
             <button
-              onClick={() => setShowWalletModal(true)}
+              onClick={() => {
+                if (isMobile()) {
+                  setShowWalletModal(true);
+                } else {
+                  openConnectModal?.();
+                }
+              }}
               className="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-3 rounded-xl font-semibold transition-colors"
             >
               Connect Wallet
