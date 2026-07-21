@@ -63,3 +63,27 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* ===== CURSOR POINTER FOR INTERACTIVE ELEMENTS ===== */
+a,
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+summary,
+label,
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Disabled elements should show "not-allowed", not pointer */
+button:disabled,
+input:disabled,
+select:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
