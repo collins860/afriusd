@@ -19,6 +19,12 @@ function isMobile() {
   return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 }
 
+function hasInjectedWallet() {
+  if (typeof window === "undefined") return false;
+  const w = window as any;
+  return Boolean(w.okxwallet || w.ethereum || w.trustwallet || w.coinbaseWalletExtension);
+}
+
 const wallets = [
   {
     name: "MetaMask",
@@ -393,7 +399,9 @@ export default function InvoicePage() {
         ) : (
           <button
             onClick={() => {
-              if (isMobile()) {
+              if (hasInjectedWallet()) {
+                openConnectModal?.();
+              } else if (isMobile()) {
                 setShowWalletModal(true);
               } else {
                 openConnectModal?.();
@@ -490,7 +498,9 @@ export default function InvoicePage() {
             </p>
             <button
               onClick={() => {
-                if (isMobile()) {
+                if (hasInjectedWallet()) {
+                  openConnectModal?.();
+                } else if (isMobile()) {
                   setShowWalletModal(true);
                 } else {
                   openConnectModal?.();
