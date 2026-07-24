@@ -42,7 +42,7 @@ export function TypewriterHero() {
   }, [stage, line1Typed, line2Typed]);
 
   const showCursorOnLine1 = stage === "line1";
-  const showCursorOnLine2 = stage === "line2" || stage === "done";
+  const showCursorOnLine2 = stage === "line2";
 
   return (
     <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
