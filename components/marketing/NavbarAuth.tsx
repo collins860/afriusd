@@ -1,11 +1,39 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { supabase } from "@/lib/supabase/client";
+import { getProfile } from "@/lib/auth/profile";
 
 export function NavbarAuth() {
   const { user, loading } = useAuth();
+  const [businessName, setBusinessName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setBusinessName(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const profile = await getProfile(supabase, user.id);
+        if (!cancelled) {
+          setBusinessName(profile?.business_name ?? null);
+        }
+      } catch {
+        // Silently fall back to email if profile fetch fails
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   if (loading) {
     return (
@@ -17,7 +45,7 @@ export function NavbarAuth() {
   }
 
   if (user) {
-    const label = user.user_metadata?.business_name || (user.email?.split("@")[0] ?? "Account");
+    const label = businessName || (user.email?.split("@")[0] ?? "Account");
     return (
       <div className="flex items-center gap-3">
         <div className="hidden sm:block"><ThemeToggle /></div>

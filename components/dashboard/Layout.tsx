@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { signOut } from "@/lib/auth/actions";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { supabase } from "@/lib/supabase/client";
+import { getProfile } from "@/lib/auth/profile";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "▦", href: "/dashboard" },
@@ -19,11 +21,36 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [businessName, setBusinessName] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
 
-  const displayName = user?.user_metadata?.business_name || user?.email?.split("@")[0] || "Merchant";
+  useEffect(() => {
+    if (!user) {
+      setBusinessName(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const profile = await getProfile(supabase, user.id);
+        if (!cancelled) {
+          setBusinessName(profile?.business_name ?? null);
+        }
+      } catch {
+        // Silently fall back to email if profile fetch fails
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const displayName = businessName || user?.email?.split("@")[0] || "Merchant";
   const displayEmail = user?.email ?? "";
 
   const handleLogout = async () => {
