@@ -2,6 +2,7 @@ import Link from "next/link";
 import { NavbarAuth } from "@/components/marketing/NavbarAuth";
 import { FadeInSection } from "@/components/ui/FadeInSection";
 import { CountUp } from "@/components/ui/CountUp";
+import { TypewriterHero } from "@/components/ui/TypewriterHero";
 
 export default function Home() {
   return (
@@ -35,11 +36,7 @@ export default function Home() {
           <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-3xl" />
         </div>
         <div className="max-w-5xl mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight animate-fade-in-up">
-            Accept Stablecoin
-            <br />
-            <span className="gradient-text">Payments Across Africa</span>
-          </h1>
+          <TypewriterHero />
           <p className="text-xl mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-1" style={{ color: "var(--text-secondary)" }}>
             Create invoices in local currency and receive instant USDC settlement on Arc Network. Built for African freelancers, merchants, and businesses.
           </p>
