@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import DashboardLayout from "@/components/dashboard/Layout";
 import { useUserInvoices } from "@/lib/invoices/useUserInvoices";
+import { CountUp } from "@/components/ui/CountUp";
 import type { Invoice } from "@/lib/invoices/types";
 
 const statusStyles: Record<string, string> = {
@@ -15,8 +16,8 @@ const statusStyles: Record<string, string> = {
 function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
   const paymentLink = `${typeof window !== "undefined" ? window.location.origin : ""}/invoice/${invoice.id}`;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl border"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl border animate-scale-in"
         style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border)" }}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
@@ -60,11 +61,11 @@ function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => v
           </div>
         )}
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 border py-2 rounded-lg text-sm font-medium hover:opacity-80"
+          <button onClick={onClose} className="flex-1 border py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
             style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>Close</button>
           {invoice.status !== "paid" && (
             <Link href={`/invoice/${invoice.id}`} className="flex-1">
-              <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-medium">View Payment Page</button>
+              <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-medium transition-colors">View Payment Page</button>
             </Link>
           )}
         </div>
@@ -76,7 +77,9 @@ function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => v
 export default function PaymentsPage() {
   const { invoices, loading } = useUserInvoices();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const totalUsdc = invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + Number(i.usdc_amount), 0).toFixed(2);
+  const totalUsdc = invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + Number(i.usdc_amount), 0);
+  const paidCount = invoices.filter((i) => i.status === "paid").length;
+  const pendingCount = invoices.filter((i) => i.status === "pending").length;
 
   return (
     <DashboardLayout>
@@ -89,7 +92,7 @@ export default function PaymentsPage() {
           <p className="text-xs lg:text-sm" style={{ color: "var(--text-muted)" }}>All payment activity</p>
         </div>
         <div className="hidden sm:flex items-center gap-2 border rounded-lg px-3 py-2" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft" />
           <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Arc Testnet</span>
         </div>
       </header>
@@ -97,27 +100,33 @@ export default function PaymentsPage() {
       <div className="p-4 lg:p-8">
         <div className="grid grid-cols-3 gap-3 lg:gap-4 mb-6">
           {[
-            { label: "Total Received", value: `${totalUsdc} USDC`, color: "text-emerald-400" },
-            { label: "Paid", value: invoices.filter((i) => i.status === "paid").length.toString(), color: "text-emerald-400" },
-            { label: "Pending", value: invoices.filter((i) => i.status === "pending").length.toString(), color: "text-yellow-400" },
-          ].map((stat) => (
-            <div key={stat.label} className="glass rounded-xl p-3 lg:p-5">
+            { label: "Total Received", value: totalUsdc, decimals: 2, suffix: " USDC", color: "text-emerald-400" },
+            { label: "Paid", value: paidCount, decimals: 0, suffix: "", color: "text-emerald-400" },
+            { label: "Pending", value: pendingCount, decimals: 0, suffix: "", color: "text-yellow-400" },
+          ].map((stat, i) => (
+            <div
+              key={stat.label}
+              className="glass rounded-xl p-3 lg:p-5 hover-lift animate-fade-in-up"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
               <p className="text-xs mb-1" style={{ color: "var(--text-secondary)" }}>{stat.label}</p>
-              <p className={`text-lg lg:text-2xl font-bold ${stat.color}`}>{loading ? "..." : stat.value}</p>
+              <p className={`text-lg lg:text-2xl font-bold ${stat.color}`}>
+                {loading ? "..." : <CountUp end={stat.value} decimals={stat.decimals} suffix={stat.suffix} />}
+              </p>
             </div>
           ))}
         </div>
 
-        <div className="glass rounded-xl">
+        <div className="glass rounded-xl animate-fade-in-up delay-2">
           <div className="p-4 lg:p-6 border-b" style={{ borderColor: "var(--border)" }}>
             <h2 className="font-semibold">Payment History</h2>
           </div>
           {loading ? (
             <div className="p-8 text-center" style={{ color: "var(--text-muted)" }}>Loading...</div>
-          ) : invoices.map((invoice) => (
+          ) : invoices.map((invoice, i) => (
             <div key={invoice.id}
-              className="flex items-center justify-between px-4 lg:px-6 py-4 border-b transition-colors cursor-pointer hover:opacity-80"
-              style={{ borderColor: "var(--border)" }}
+              className="flex items-center justify-between px-4 lg:px-6 py-4 border-b transition-colors cursor-pointer hover:opacity-80 animate-fade-in-up"
+              style={{ borderColor: "var(--border)", animationDelay: `${i * 60}ms` }}
               onClick={() => setSelectedInvoice(invoice)}>
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${invoice.status === "paid" ? "bg-emerald-500/10" : "bg-yellow-500/10"}`}>

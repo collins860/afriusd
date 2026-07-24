@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import DashboardLayout from "@/components/dashboard/Layout";
 import { useUserInvoices } from "@/lib/invoices/useUserInvoices";
+import { CountUp } from "@/components/ui/CountUp";
 import type { Invoice } from "@/lib/invoices/types";
 
 const statusStyles: Record<string, string> = {
@@ -15,8 +16,8 @@ const statusStyles: Record<string, string> = {
 function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => void }) {
   const paymentLink = `${typeof window !== "undefined" ? window.location.origin : ""}/invoice/${invoice.id}`;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl border"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl border animate-scale-in"
         style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border)" }}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
@@ -62,11 +63,11 @@ function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => v
           </div>
         )}
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 border py-2 rounded-lg text-sm font-medium hover:opacity-80"
+          <button onClick={onClose} className="flex-1 border py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
             style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>Close</button>
           {invoice.status !== "paid" && (
             <Link href={`/invoice/${invoice.id}`} className="flex-1">
-              <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-medium">View Payment Page</button>
+              <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-medium transition-colors">View Payment Page</button>
             </Link>
           )}
         </div>
@@ -89,15 +90,17 @@ export default function InvoicesPage() {
         style={{ borderColor: "var(--border)", backgroundColor: "var(--header-bg)" }}>
         <div>
           <h1 className="text-lg lg:text-xl font-semibold">Invoices</h1>
-          <p className="text-xs lg:text-sm" style={{ color: "var(--text-muted)" }}>{invoices.length} total invoices</p>
+          <p className="text-xs lg:text-sm" style={{ color: "var(--text-muted)" }}>
+            {loading ? "..." : <CountUp end={invoices.length} duration={800} />} total invoices
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center gap-2 border rounded-lg px-3 py-2" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft" />
             <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Arc Testnet</span>
           </div>
           <Link href="/invoice/create">
-            <button className="bg-emerald-500 hover:bg-emerald-400 text-white px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-medium">+ New Invoice</button>
+            <button className="bg-emerald-500 hover:bg-emerald-400 text-white px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-medium transition-colors hover:scale-[1.03]">+ New Invoice</button>
           </Link>
         </div>
       </header>
@@ -120,12 +123,14 @@ export default function InvoicesPage() {
           {loading ? (
             <div className="p-8 text-center" style={{ color: "var(--text-muted)" }}>Loading...</div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center">
+            <div className="p-8 text-center animate-fade-in-up">
               <p className="mb-4" style={{ color: "var(--text-muted)" }}>No invoices found</p>
               <Link href="/invoice/create"><button className="bg-emerald-500 text-white px-6 py-2 rounded-lg text-sm font-medium">Create Invoice</button></Link>
             </div>
-          ) : filtered.map((invoice) => (
-            <div key={invoice.id} className="glass rounded-xl p-4 cursor-pointer hover:border-emerald-500/30 transition-colors"
+          ) : filtered.map((invoice, i) => (
+            <div key={invoice.id}
+              className="glass rounded-xl p-4 cursor-pointer hover-lift transition-colors hover:border-emerald-500/30 animate-fade-in-up"
+              style={{ animationDelay: `${i * 60}ms` }}
               onClick={() => setSelectedInvoice(invoice)}>
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -154,7 +159,7 @@ export default function InvoicesPage() {
         </div>
 
         {/* Desktop Table */}
-        <div className="hidden lg:block glass rounded-xl">
+        <div className="hidden lg:block glass rounded-xl animate-fade-in-up delay-1">
           <div className="grid grid-cols-6 gap-4 px-6 py-3 border-b text-xs font-medium uppercase tracking-wider"
             style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}>
             <div className="col-span-2">Customer</div>
@@ -167,9 +172,10 @@ export default function InvoicesPage() {
               <p className="mb-4" style={{ color: "var(--text-muted)" }}>No invoices found</p>
               <Link href="/invoice/create"><button className="bg-emerald-500 text-white px-6 py-2 rounded-lg text-sm font-medium">Create Invoice</button></Link>
             </div>
-          ) : filtered.map((invoice) => (
-            <div key={invoice.id} className="grid grid-cols-6 gap-4 px-6 py-4 border-b transition-colors items-center cursor-pointer hover:opacity-80"
-              style={{ borderColor: "var(--border)" }}
+          ) : filtered.map((invoice, i) => (
+            <div key={invoice.id}
+              className="grid grid-cols-6 gap-4 px-6 py-4 border-b transition-colors items-center cursor-pointer hover:opacity-80 animate-fade-in-up"
+              style={{ borderColor: "var(--border)", animationDelay: `${i * 60}ms` }}
               onClick={() => setSelectedInvoice(invoice)}>
               <div className="col-span-2">
                 <p className="text-sm font-medium">{invoice.customer_name}</p>

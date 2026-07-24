@@ -71,7 +71,7 @@ export default function SettingsPage() {
 
       <div className="p-4 lg:p-8 max-w-2xl">
         <div className="space-y-4">
-          <div className="glass rounded-xl p-4 lg:p-6">
+          <div className="glass rounded-xl p-4 lg:p-6 hover-lift animate-fade-in-up">
             <h2 className="font-semibold mb-5">Merchant Profile</h2>
             <div className="space-y-4">
               <div>
@@ -81,7 +81,7 @@ export default function SettingsPage() {
                   onChange={(e) => setBusinessName(e.target.value)}
                   disabled={loading}
                   placeholder="My Business"
-                  className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-60"
+                  className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-60 transition-colors"
                   style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)", color: "var(--text-primary)" }}
                 />
               </div>
@@ -94,24 +94,24 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="glass rounded-xl p-4 lg:p-6">
+          <div className="glass rounded-xl p-4 lg:p-6 hover-lift animate-fade-in-up delay-2">
             <h2 className="font-semibold mb-4">Network</h2>
             <div className="flex items-center justify-between p-4 rounded-lg" style={{ backgroundColor: "var(--bg-input)" }}>
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft" />
                 <span className="text-sm font-medium">Arc Testnet</span>
               </div>
               <span className="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">Connected</span>
             </div>
           </div>
 
-          <div className="glass rounded-xl p-4 lg:p-6">
+          <div className="glass rounded-xl p-4 lg:p-6 hover-lift animate-fade-in-up delay-3">
             <h2 className="font-semibold mb-4">Default Currency</h2>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
               disabled={loading}
-              className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-60"
+              className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-60 transition-colors"
               style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)", color: "var(--text-primary)" }}
             >
               {CURRENCIES.map((c) => (
@@ -123,7 +123,7 @@ export default function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving || loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium transition-colors"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium transition-all hover:scale-[1.01] animate-fade-in-up delay-4"
           >
             {saving ? "Saving..." : "Save Settings"}
           </button>
