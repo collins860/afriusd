@@ -6,6 +6,8 @@ export type UserProfile = {
   last_name: string;
   email: string;
   marketing_consent: boolean;
+  business_name: string | null;
+  default_currency: string | null;
   created_at: string;
 };
 
@@ -47,6 +49,22 @@ export async function getProfile(
 
   if (error) throw error;
   return data as UserProfile | null;
+}
+
+export async function updateProfile(
+  supabase: SupabaseClient,
+  userId: string,
+  updates: Partial<Pick<UserProfile, "business_name" | "default_currency">>
+): Promise<UserProfile> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(updates)
+    .eq("id", userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as UserProfile;
 }
 
 export function getFullName(profile: Pick<UserProfile, "first_name" | "last_name">) {

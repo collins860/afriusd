@@ -1,8 +1,61 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/Layout";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { supabase } from "@/lib/supabase/client";
+import { getProfile, updateProfile } from "@/lib/auth/profile";
+import { toast } from "sonner";
+
+const CURRENCIES = [
+  { code: "NGN", label: "NGN — Nigerian Naira" },
+  { code: "KES", label: "KES — Kenyan Shilling" },
+  { code: "GHS", label: "GHS — Ghanaian Cedi" },
+  { code: "ZAR", label: "ZAR — South African Rand" },
+  { code: "USD", label: "USD — US Dollar" },
+];
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const [businessName, setBusinessName] = useState("");
+  const [currency, setCurrency] = useState("NGN");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    (async () => {
+      try {
+        const profile = await getProfile(supabase, user.id);
+        if (profile) {
+          setBusinessName(profile.business_name ?? "");
+          setCurrency(profile.default_currency ?? "NGN");
+        }
+      } catch {
+        toast.error("Could not load your settings");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await updateProfile(supabase, user.id, {
+        business_name: businessName.trim(),
+        default_currency: currency,
+      });
+      toast.success("Settings saved");
+    } catch {
+      toast.error("Could not save settings. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <header className="border-b px-4 lg:px-8 py-4 sticky top-0 backdrop-blur-md z-10"
@@ -18,9 +71,14 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm block mb-2" style={{ color: "var(--text-secondary)" }}>Business Name</label>
-                <input defaultValue="My Business"
-                  className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50"
-                  style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)", color: "var(--text-primary)" }} />
+                <input
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  disabled={loading}
+                  placeholder="My Business"
+                  className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-60"
+                  style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                />
               </div>
               <div>
                 <label className="text-sm block mb-2" style={{ color: "var(--text-secondary)" }}>Wallet Address</label>
@@ -44,18 +102,25 @@ export default function SettingsPage() {
 
           <div className="glass rounded-xl p-4 lg:p-6">
             <h2 className="font-semibold mb-4">Default Currency</h2>
-            <select className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50"
-              style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)", color: "var(--text-primary)" }}>
-              <option>NGN — Nigerian Naira</option>
-              <option>KES — Kenyan Shilling</option>
-              <option>GHS — Ghanaian Cedi</option>
-              <option>ZAR — South African Rand</option>
-              <option>USD — US Dollar</option>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              disabled={loading}
+              className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-emerald-500/50 disabled:opacity-60"
+              style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>{c.label}</option>
+              ))}
             </select>
           </div>
 
-          <button className="w-full bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-xl font-medium transition-colors">
-            Save Settings
+          <button
+            onClick={handleSave}
+            disabled={saving || loading}
+            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-medium transition-colors"
+          >
+            {saving ? "Saving..." : "Save Settings"}
           </button>
         </div>
       </div>
