@@ -1,81 +1,105 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Edit these two lines to change what gets typed.
 const LINE_1 = "Accept Stablecoin";
 const LINE_2 = "Payments Across Africa";
 
-const TYPE_SPEED_MS = 45; // lower = faster typing
+const MS_PER_CHAR = 45; // lower = faster typing
 const PAUSE_BETWEEN_LINES_MS = 200;
 
 export function TypewriterHero() {
-  const [line1Typed, setLine1Typed] = useState("");
-  const [line2Typed, setLine2Typed] = useState("");
-  const [stage, setStage] = useState<"line1" | "pause" | "line2" | "done">("line1");
+  const measureRef1 = useRef<HTMLSpanElement>(null);
+  const measureRef2 = useRef<HTMLSpanElement>(null);
+  const [widths, setWidths] = useState<{ w1: number; w2: number } | null>(null);
 
+  // Measure the natural pixel width of each line ONCE on mount.
+  // Everything after this is handled by native CSS animation, not React.
   useEffect(() => {
-    if (stage === "line1") {
-      if (line1Typed.length < LINE_1.length) {
-        const t = setTimeout(
-          () => setLine1Typed(LINE_1.slice(0, line1Typed.length + 1)),
-          TYPE_SPEED_MS
-        );
-        return () => clearTimeout(t);
-      } else {
-        const t = setTimeout(() => setStage("line2"), PAUSE_BETWEEN_LINES_MS);
-        return () => clearTimeout(t);
-      }
+    if (measureRef1.current && measureRef2.current) {
+      setWidths({
+        w1: measureRef1.current.offsetWidth,
+        w2: measureRef2.current.offsetWidth,
+      });
     }
+  }, []);
 
-    if (stage === "line2") {
-      if (line2Typed.length < LINE_2.length) {
-        const t = setTimeout(
-          () => setLine2Typed(LINE_2.slice(0, line2Typed.length + 1)),
-          TYPE_SPEED_MS
-        );
-        return () => clearTimeout(t);
-      } else {
-        setStage("done");
-      }
-    }
-  }, [stage, line1Typed, line2Typed]);
-
-  const showCursorOnLine1 = stage === "line1";
-  const showCursorOnLine2 = stage === "line2";
+  const dur1 = LINE_1.length * MS_PER_CHAR;
+  const dur2 = LINE_2.length * MS_PER_CHAR;
+  const delay2 = dur1 + PAUSE_BETWEEN_LINES_MS;
 
   return (
     <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-      {line1Typed}
-      {showCursorOnLine1 && <Cursor />}
-      <br />
-      <span className="gradient-text">
-        {line2Typed}
-        {showCursorOnLine2 && <Cursor />}
+      {/* Invisible copies used only to measure text width, never shown */}
+      <span ref={measureRef1} className="type-measure">
+        {LINE_1}
       </span>
-    </h1>
-  );
-}
+      <span ref={measureRef2} className="type-measure">
+        {LINE_2}
+      </span>
 
-function Cursor() {
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        width: "0.06em",
-        marginLeft: "3px",
-        background: "currentColor",
-        animation: "blink 1s step-start infinite",
-      }}
-    >
-      &nbsp;
+      {widths && (
+        <>
+          <span className="type-line type-line-1">{LINE_1}</span>
+          <br />
+          <span className="gradient-text type-line type-line-2">{LINE_2}</span>
+        </>
+      )}
+
       <style jsx>{`
-        @keyframes blink {
-          50% {
-            opacity: 0;
+        .type-measure {
+          position: absolute;
+          visibility: hidden;
+          white-space: nowrap;
+          pointer-events: none;
+        }
+        .type-line {
+          display: inline-block;
+          overflow: hidden;
+          white-space: nowrap;
+          vertical-align: bottom;
+          width: 0;
+          border-right: 3px solid currentColor;
+        }
+        .type-line-1 {
+          animation:
+            reveal1 ${dur1}ms steps(${LINE_1.length}, end) forwards,
+            hideCaret1 1ms ${dur1}ms forwards;
+        }
+        .type-line-2 {
+          border-right-color: transparent;
+          animation:
+            reveal2 ${dur2}ms steps(${LINE_2.length}, end) ${delay2}ms forwards,
+            showCaret2 1ms ${delay2}ms forwards,
+            hideCaret2 1ms ${delay2 + dur2}ms forwards;
+        }
+        @keyframes reveal1 {
+          to {
+            width: ${widths?.w1 ?? 0}px;
+          }
+        }
+        @keyframes reveal2 {
+          to {
+            width: ${widths?.w2 ?? 0}px;
+          }
+        }
+        @keyframes showCaret2 {
+          to {
+            border-color: currentColor;
+          }
+        }
+        @keyframes hideCaret1 {
+          to {
+            border-color: transparent;
+          }
+        }
+        @keyframes hideCaret2 {
+          to {
+            border-color: transparent;
           }
         }
       `}</style>
-    </span>
+    </h1>
   );
 }
