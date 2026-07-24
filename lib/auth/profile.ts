@@ -51,15 +51,33 @@ export async function getProfile(
   return data as UserProfile | null;
 }
 
-export async function updateProfile(
+/**
+ * Safely saves business_name / default_currency.
+ * - If a profile row already exists, only those two fields are touched —
+ *   existing email/first_name/last_name are preserved untouched.
+ * - If no profile row exists yet, one is created using the auth user's
+ *   email/metadata as a fallback so required fields aren't left blank.
+ */
+export async function saveMerchantSettings(
   supabase: SupabaseClient,
   userId: string,
-  updates: Partial<Pick<UserProfile, "business_name" | "default_currency">>
+  updates: Partial<Pick<UserProfile, "business_name" | "default_currency">>,
+  authUser: { email?: string | null; user_metadata?: { first_name?: string; last_name?: string } }
 ): Promise<UserProfile> {
+  const existing = await getProfile(supabase, userId);
+
+  const payload = {
+    id: userId,
+    email: existing?.email ?? authUser.email ?? "",
+    first_name: existing?.first_name ?? authUser.user_metadata?.first_name ?? "",
+    last_name: existing?.last_name ?? authUser.user_metadata?.last_name ?? "",
+    marketing_consent: existing?.marketing_consent ?? false,
+    ...updates,
+  };
+
   const { data, error } = await supabase
     .from("profiles")
-    .update(updates)
-    .eq("id", userId)
+    .upsert(payload)
     .select()
     .single();
 

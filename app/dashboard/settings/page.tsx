@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/Layout";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { supabase } from "@/lib/supabase/client";
-import { getProfile, updateProfile } from "@/lib/auth/profile";
+import { getProfile, saveMerchantSettings } from "@/lib/auth/profile";
 import { toast } from "sonner";
 
 const CURRENCIES = [
@@ -44,10 +44,15 @@ export default function SettingsPage() {
     if (!user) return;
     setSaving(true);
     try {
-      await updateProfile(supabase, user.id, {
-        business_name: businessName.trim(),
-        default_currency: currency,
-      });
+      await saveMerchantSettings(
+        supabase,
+        user.id,
+        {
+          business_name: businessName.trim(),
+          default_currency: currency,
+        },
+        user
+      );
       toast.success("Settings saved");
     } catch {
       toast.error("Could not save settings. Try again.");
