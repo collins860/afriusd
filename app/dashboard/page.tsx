@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import DashboardLayout from "@/components/dashboard/Layout";
 import { useUserInvoices } from "@/lib/invoices/useUserInvoices";
+import { CountUp } from "@/components/ui/CountUp";
 import type { Invoice } from "@/lib/invoices/types";
 
 const statusStyles: Record<string, string> = {
@@ -16,8 +17,8 @@ function InvoiceModal({ invoice, onClose }: { invoice: Invoice; onClose: () => v
   const paymentLink = `${typeof window !== "undefined" ? window.location.origin : ""}/invoice/${invoice.id}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl border"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl border animate-scale-in"
         style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border)" }}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
@@ -91,10 +92,10 @@ export default function Dashboard() {
   const { invoices, loading } = useUserInvoices();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
-  const totalRevenue = invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + Number(i.usdc_amount), 0).toFixed(2);
+  const totalRevenue = invoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + Number(i.usdc_amount), 0);
   const paidCount = invoices.filter((i) => i.status === "paid").length;
   const pendingCount = invoices.filter((i) => i.status === "pending").length;
-  const totalUsdc = invoices.reduce((sum, i) => sum + Number(i.usdc_amount), 0).toFixed(2);
+  const totalUsdc = invoices.reduce((sum, i) => sum + Number(i.usdc_amount), 0);
 
   return (
     <DashboardLayout>
@@ -108,11 +109,11 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 border rounded-lg px-3 py-2" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border)" }}>
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft" />
             <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Arc Testnet</span>
           </div>
           <Link href="/invoice/create">
-            <button className="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button className="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:scale-[1.03]">
               + New Invoice
             </button>
           </Link>
@@ -127,21 +128,27 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
           {[
-            { label: "Total Revenue", value: `$${totalRevenue}`, change: "USDC received", color: "text-emerald-400" },
-            { label: "Paid Invoices", value: paidCount.toString(), change: "completed", color: "text-emerald-400" },
-            { label: "Pending", value: pendingCount.toString(), change: "awaiting payment", color: "text-yellow-400" },
-            { label: "Total USDC", value: totalUsdc, change: "all invoices", color: "text-blue-400" },
-          ].map((stat) => (
-            <div key={stat.label} className="glass rounded-xl p-4">
+            { label: "Total Revenue", value: totalRevenue, prefix: "$", decimals: 2, change: "USDC received", color: "text-emerald-400" },
+            { label: "Paid Invoices", value: paidCount, decimals: 0, change: "completed", color: "text-emerald-400" },
+            { label: "Pending", value: pendingCount, decimals: 0, change: "awaiting payment", color: "text-yellow-400" },
+            { label: "Total USDC", value: totalUsdc, decimals: 2, change: "all invoices", color: "text-blue-400" },
+          ].map((stat, i) => (
+            <div
+              key={stat.label}
+              className="glass rounded-xl p-4 hover-lift animate-fade-in-up"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
               <p className="text-xs mb-1" style={{ color: "var(--text-secondary)" }}>{stat.label}</p>
-              <p className="text-xl lg:text-2xl font-bold mb-1">{loading ? "..." : stat.value}</p>
+              <p className="text-xl lg:text-2xl font-bold mb-1">
+                {loading ? "..." : <CountUp end={stat.value} prefix={stat.prefix} decimals={stat.decimals} />}
+              </p>
               <p className={`text-xs ${stat.color}`}>{stat.change}</p>
             </div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          <div className="lg:col-span-2 glass rounded-xl">
+          <div className="lg:col-span-2 glass rounded-xl animate-fade-in-up delay-2">
             <div className="flex items-center justify-between p-4 lg:p-6 border-b" style={{ borderColor: "var(--border)" }}>
               <h2 className="font-semibold">Recent Invoices</h2>
               <Link href="/invoice/create">
@@ -159,10 +166,10 @@ export default function Dashboard() {
               </div>
             ) : (
               <div>
-                {invoices.slice(0, 5).map((invoice) => (
+                {invoices.slice(0, 5).map((invoice, i) => (
                   <div key={invoice.id}
-                    className="flex items-center justify-between px-4 lg:px-6 py-3 border-b transition-colors cursor-pointer hover:opacity-80"
-                    style={{ borderColor: "var(--border)" }}
+                    className="flex items-center justify-between px-4 lg:px-6 py-3 border-b transition-colors cursor-pointer hover:opacity-80 animate-fade-in-up"
+                    style={{ borderColor: "var(--border)", animationDelay: `${i * 60}ms` }}
                     onClick={() => setSelectedInvoice(invoice)}>
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--bg-input)" }}>
@@ -186,33 +193,35 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-4">
-            <div className="glass rounded-xl p-4 lg:p-6">
+            <div className="glass rounded-xl p-4 lg:p-6 hover-lift animate-fade-in-up delay-3">
               <p className="text-sm mb-3" style={{ color: "var(--text-secondary)" }}>Total Invoiced</p>
               <div className="text-center py-2">
-                <p className="text-3xl font-bold">{loading ? "..." : totalUsdc}</p>
+                <p className="text-3xl font-bold">
+                  {loading ? "..." : <CountUp end={totalUsdc} decimals={2} />}
+                </p>
                 <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>USDC</p>
                 <div className="mt-3 flex items-center justify-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft" />
                   <span className="text-emerald-400 text-xs">Arc Testnet</span>
                 </div>
               </div>
               <Link href="/invoice/create">
-                <button className="w-full mt-4 bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+                <button className="w-full mt-4 bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-medium transition-colors hover:scale-[1.02]">
                   + Create Invoice
                 </button>
               </Link>
             </div>
-            <div className="glass rounded-xl p-4 lg:p-6">
+            <div className="glass rounded-xl p-4 lg:p-6 hover-lift animate-fade-in-up delay-4">
               <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>Invoice Summary</p>
               <div className="space-y-3">
                 {[
-                  { label: "Total", value: invoices.length.toString() },
-                  { label: "Paid", value: paidCount.toString() },
-                  { label: "Pending", value: pendingCount.toString() },
+                  { label: "Total", value: invoices.length },
+                  { label: "Paid", value: paidCount },
+                  { label: "Pending", value: pendingCount },
                 ].map((item) => (
                   <div key={item.label} className="flex justify-between text-sm">
                     <span style={{ color: "var(--text-secondary)" }}>{item.label}</span>
-                    <span className="font-medium">{loading ? "..." : item.value}</span>
+                    <span className="font-medium">{loading ? "..." : <CountUp end={item.value} duration={800} />}</span>
                   </div>
                 ))}
               </div>
